@@ -1,0 +1,3127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --ub-purple: #7D2D91;
+            --ub-gold: #FABB27;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        h2, h3 {
+            color: var(--ub-purple);
+            border-bottom: 3px solid var(--ub-gold);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--ub-purple);
+            border-color: var(--ub-purple);
+        }
+        
+        .btn-primary:hover {
+            background-color: #662075;
+            border-color: #662075;
+        }
+        
+        .btn-secondary {
+            background-color: var(--ub-gold);
+            border-color: var(--ub-gold);
+            color: #000;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e5a922;
+            border-color: #e5a922;
+            color: #000;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-body {
+            border-left: 4px solid var(--ub-purple);
+        }
+        
+        .form-label {
+            color: var(--ub-purple);
+            font-weight: 500;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table thead th {
+            background-color: var(--ub-purple);
+            color: white;
+            border: none;
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background-color: rgba(125, 45, 145, 0.05);
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(250, 187, 39, 0.1);
+        }
+        
+        .semester-type-btn {
+            border-color: var(--ub-purple);
+            color: var(--ub-purple);
+            padding: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .semester-type-btn:hover {
+            background-color: var(--ub-purple);
+            border-color: var(--ub-purple);
+            color: white;
+        }
+        
+        .semester-type-btn.active {
+            background-color: var(--ub-purple);
+            border-color: var(--ub-purple);
+            color: white;
+        }
+
+        .readonly-grey {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+    </style>
+    <script>
+        const faculties = {
+            'FMSS': 'Faculty of Management and Social Sciences',
+            'FEA': 'Faculty of Education and Arts',
+            'FST': 'Faculty of Science and Technology',
+            'FHS': 'Faculty of Health Science'
+        };
+
+        const categoryOptions = {
+            'Teaching': {
+                'Teaching Load': {
+                    'Undergraduate Course (3 credit hours)': 9,
+                    'Graduate Course (3 credit hours)': 12,
+                    'Repeated Section (3 credit hours)': 4.5,
+                    'New Course Development': 3,
+                    'New Online/Blended Course Development': 2
+                },
+                'Supervision': {
+                    'Undergraduate Thesis (per student)': 2,
+                    'Master\'s Thesis (per student)': 4,
+                    'Doctoral Thesis (per student)': 6
+                },
+                'Monitoring': {
+                    'Course Review and Reflection': 1,
+                    'Program-level Data Analysis': 3,
+                    'Program Review Meeting Participation': 1
+                }
+            },
+            'Research': {
+                'Publications': {
+                    'High-impact Journal Article': 20,
+                    'Moderate-impact Journal Article': 15,
+                    'Low-tier Journal Article': 10,
+                    'Book Chapter (International Publisher)': 20,
+                    'Book Chapter (Other Academic Publisher)': 15,
+                    'Conference Presentation': 5
+                },
+                'Grants': {
+                    'Research Grant Application': 5,
+                    'Research Grant Implementation (PI)': 15
+                },
+                'Knowledge Exchange': {
+                    'Industry Partnership Project': 10,
+                    'Community Workshop': 5,
+                    'Media Appearance': 3,
+                    'University Consultancy': 10
+                }
+            },
+            'Service': {
+                'Leadership': {
+                    'Course Coordinator (GEC)': 2,
+                    'Accreditation Committee Chair': 12,
+                    'Curriculum Review Lead': 10,
+                    'Routine Committee Chair': 5
+                },
+                'Committee Work': {
+                    'University-wide Committee Member': 2,
+                    'Journal Editorial Board': 3,
+                    'Professional Association Leadership': 5
+                },
+                'Training': {
+                    'Quality Assurance Training': 3,
+                    'Program Monitoring': 2,
+                    'Faculty Development Workshop': 4,
+                    'Emerging Technology Training': 10,
+                    'Leadership Training': 10
+                },
+                'External Services': {
+                  'Community Engagement': 2,
+                  'Leadership Role': 3
+                }
+            },
+            'Professional Development': {
+                'Activities': {
+                    'Conference Attendance': 2,
+                    'Course/Certification Completion': 5,
+                    'Faculty Development Workshop': 2,
+                    'Quality Assurance Training': 2,
+                    'Program Monitoring': 2,
+                    'Emerging Technology Training': 7,
+                    'Leadership Training': 7,
+                    'Strategic Conference Attendance': 4
+                }
+            },
+            'Administration': {
+                'Leadership Roles': {
+                    'Dean': 80,
+                    'Department Chair': 70,
+                    'Campus Director/Administrator': 85,
+                    'Program Coordinator': 35,
+                    'Committee Chair (University-wide)': 5  
+                }
+            }
+        };
+
+        const facultyCategories = {
+            'Non Tenure': {
+                types: [
+                    'Temporary Faculty',
+                    'Instructor',
+                    'Associate Lecturer',
+                    'Lecturer (Teaching Track)',
+                    'Lecturer (Research Track)',
+                    'Senior Lecturer',
+                    'Assistant Professor'
+                ]
+            },
+            'Tenure': {
+                types: [
+                    'Assistant Professor',
+                    'Associate Professor',
+                    'Professor'
+                ]
+            }
+        };
+
+        // Track the last used manual adjustment value
+        let lastUsedManualAdjustment = 0;
+
+        function addWorkloadEntry() {
+            // Calculate current manual adjustment sum
+            let manualAdjustment = 0;
+            $('.adjustment-entry').each(function() {
+                const type = $(this).find('.adjustment-type').val();
+                const points = parseInt($(this).find('.adjustment-points').val()) || 0;
+                if (type && points > 0) manualAdjustment += points;
+            });
+            // Only apply manual adjustment if it has changed since the last used
+            let entryManualAdjustment = 0;
+            if (manualAdjustment !== lastUsedManualAdjustment) {
+                entryManualAdjustment = manualAdjustment;
+                lastUsedManualAdjustment = manualAdjustment;
+            }
+            const entryHtml = `
+                <div class="workload-entry card mb-3" data-manual-adjustment="${entryManualAdjustment}">
+                    <div class="card-body">
+                        <button type="button" class="btn-close float-end" onclick="$(this).closest('.workload-entry').remove(); recalculateAllEntries();"></button>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <select class="form-control category" name="category" required onchange="updateSubcategories(this)">
+                                    <option value="">Select Category</option>
+                                    <option value="Teaching">Teaching</option>
+                                    <option value="Research">Research</option>
+                                    <option value="Service">Service</option>
+                                    <option value="Professional Development">Professional Development</option>
+                                    <option value="Administration">Administration</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Subcategory</label>
+                                <select class="form-control subcategory" name="subcategory" required onchange="updateActivities(this)">
+                                    <option value="">Select Category First</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Activity</label>
+                                <select class="form-control activity" name="activity" required onchange="recalculateAllEntries()">
+                                    <option value="">Select Subcategory First</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="conditional-fields" style="display:none;">
+                        <div class="course-code-field" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Course Code</label>
+                                    <input type="text" class="form-control course-code" name="courseCode">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sei-score-field" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                        <label class="form-label">SEI Score (optional)</label>
+                                        <input type="number" class="form-control sei-score" name="seiScore" step="0.1" min="1" max="5" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Class Size</label>
+                                        <input type="number" class="form-control student-count" name="studentCount" min="1" max="100" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                </div>
+                            </div>
+                        </div>
+                            <div class="credit-hours-section" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Credit Hours</label>
+                                        <input type="number" class="form-control credit-hours" name="creditHours" min="1" max="12" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clinical-practicum-fields" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Practicum Type</label>
+                                        <select class="form-control practicum-type" name="practicumType" onchange="updatePoints(this)">
+                                            <option value="">Select Type</option>
+                                            <option value="Hospital">Hospital</option>
+                                            <option value="Community">Community</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Number of Students</label>
+                                        <input type="number" class="form-control practicum-students" name="practicumStudents" min="1" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Number of Weeks</label>
+                                        <input type="number" class="form-control practicum-weeks" name="practicumWeeks" min="1" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="internship-fields" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Faculty</label>
+                                        <select class="form-control faculty-select" name="faculty" onchange="updatePoints(this)">
+                                            <option value="">Select Faculty</option>
+                                            <option value="FEA">FEA</option>
+                                            <option value="FST">FST</option>
+                                            <option value="FMSS">FMSS</option>
+                                            <option value="FHS">FHS</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Number of Interns</label>
+                                        <input type="number" class="form-control intern-count" name="internCount" min="1" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                    </div>
+                                    <div class="col-md-4 fea-fields" style="display: none;">
+                                        <label class="form-label">Program Level</label>
+                                        <select class="form-control program-level" name="programLevel" onchange="updatePoints(this)">
+                                            <option value="">Select Level</option>
+                                            <option value="associate">Associate Degree</option>
+                                            <option value="certificate">Certificate in Education</option>
+                                            <option value="bachelor">Bachelor's Degree</option>
+                                            <option value="diploma">Diploma Programs</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 fmss-fields" style="display: none;">
+                                        <label class="form-label">Courses</label>
+                                        <select class="form-control course-select" name="course" onchange="updatePoints(this)">
+                                            <option value="">Select Course</option>
+                                            <option value="TOUR2995">TOUR 2995</option>
+                                            <option value="BBUA4995">BBUA 4995</option>
+                                            <option value="MGMT4995">MGMT 4995</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 fhs-fields" style="display: none;">
+                                        <label class="form-label">Courses</label>
+                                        <select class="form-control fhscourse-select" name="course" onchange="updatePoints(this)">
+                                            <option value="">Select Course</option>
+                                            <option value="BPHA"> BPHA4851 / BPHA4902 (Pharmacy)</option>
+                                            <option value="BMS">BMS3993 / BMLS4992 (Medical Lab Science)</option>
+                                            <option value="SW2991">Social Work 2991 </option>
+                                            <option value="SW3991">Social Work 3991 (6-credit)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 fst-fields" style="display: none;">
+                                        <label class="form-label">Course Code</label>
+                                        <input type="text" class="form-control course-code" name="courseCode">
+                                    </div>
+                                </div>
+                            </div>
+                           <!-- <div class="fieldwork-fields" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">In-Class Hours</label>
+                                        <input type="number" class="form-control inclass-hours" name="inclassHours" min="1" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Field Hours</label>
+                                        <input type="number" class="form-control field-hours" name="fieldHours" min="1" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                                    </div>
+                                </div>
+                            </div> -->
+                            <!-- Other conditional fields (practicum, internship, etc.) remain here -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control quantity" name="quantity" value="1" min="1" max="5" onchange="updatePoints(this)" oninput="updatePoints(this)">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Base Points</label>
+                                <input type="number" class="form-control base-points readonly-grey" name="basePoints" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Adjustment Points</label>
+                                <input type="number" class="form-control adjustment-points readonly-grey" name="adjustmentPoints" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Total Points</label>
+                                <input type="number" class="form-control total-points readonly-grey" name="totalPoints" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Description</label>
+                                    <textarea class="form-control description" name="description" rows="2" onchange="updatePoints(this)" oninput="updatePoints(this)"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#workloadEntries').append(entryHtml);
+            recalculateAllEntries();
+        }
+      
+        function updateSubcategories(selectElement) {
+            const entryDiv = $(selectElement).closest('.workload-entry');
+            const category = $(selectElement).val();
+            const subcategorySelect = entryDiv.find('.subcategory');
+            subcategorySelect.empty();
+            subcategorySelect.append('<option value="">Select Subcategory</option>');
+            if (category === 'Teaching') {
+                subcategorySelect.append('<option value="Class">Class</option>');
+                subcategorySelect.append('<option value="Clinical Practicum">Clinical Practicum</option>');
+                subcategorySelect.append('<option value="Internship">Internship</option>');
+                subcategorySelect.append('<option value="Field Work">Field Work</option>');
+            } else if (category === 'Administration') {
+                subcategorySelect.append('<option value="Leadership Roles">Leadership Roles</option>');
+            } else if (category && categoryOptions[category]) {
+                Object.keys(categoryOptions[category]).forEach(subcategory => {
+                    subcategorySelect.append(`<option value="${subcategory}">${subcategory}</option>`);
+                });
+            }
+            // Hide all conditional fields until subcategory is selected
+            entryDiv.find('.conditional-fields').hide();
+        }
+
+        function updateActivities(selectElement) {
+            const entryDiv = $(selectElement).closest('.workload-entry');
+            const category = entryDiv.find('.category').val();
+            const subcategory = $(selectElement).val();
+            const activitySelect = entryDiv.find('.activity');
+            activitySelect.empty();
+            activitySelect.append('<option value="">Select Activity</option>');
+            
+            // Hide all conditional fields first
+            entryDiv.find('.conditional-fields').hide();
+            entryDiv.find('.course-code-field').hide();
+            entryDiv.find('.credit-hours-section').hide();
+            entryDiv.find('.sei-score-field').hide();
+            entryDiv.find('.clinical-practicum-fields').hide();
+            entryDiv.find('.internship-fields').hide();
+            // entryDiv.find('.fieldwork-fields').hide();
+            entryDiv.find('.fhs-fields').hide();
+            entryDiv.find('.fea-fields').hide();
+            entryDiv.find('.fmss-fields').hide();
+            entryDiv.find('.fst-fields').hide();
+            
+            if (category === 'Teaching') {
+                if (subcategory === 'Class') {
+                    activitySelect.append('<option value="Undergraduate">Undergraduate Class</option>');
+                    activitySelect.append('<option value="Graduate">Graduate Class</option>');
+                    activitySelect.append('<option value="Repeated">Repeated Section</option>');
+                    // Show only relevant fields for Class
+                    entryDiv.find('.conditional-fields').show();
+                    entryDiv.find('.course-code-field').show();
+                    entryDiv.find('.credit-hours-section').show();
+                    entryDiv.find('.sei-score-field').show();
+                } else if (subcategory === 'Clinical Practicum') {
+                    activitySelect.append('<option value="Hospital">Hospital Practicum</option>');
+                    activitySelect.append('<option value="Community">Community Practicum</option>');
+                    entryDiv.find('.conditional-fields').show();
+                    entryDiv.find('.course-code-field').show();
+                    entryDiv.find('.clinical-practicum-fields').show();
+                } else if (subcategory === 'Internship') {
+                    activitySelect.append('<option value="Coordinator">Coordinator</option>');
+                    activitySelect.append('<option value="Site Supervision">Site Supervision</option>');
+                    activitySelect.prop('required', false)
+                    // activitySelect.append('<option value="FST">FST</option>');
+                    // activitySelect.append('<option value="FHS">FHS</option>');
+                    entryDiv.find('.conditional-fields').show();
+                    entryDiv.find('.internship-fields').show();
+                } else if (subcategory === 'Field Work') {
+                    activitySelect.prop('required', false)
+                    activitySelect.append('<option value="Coordinator">Coordinator</option>');
+                    activitySelect.append('<option value="Site Supervision">Site Supervision</option>');
+                    entryDiv.find('.conditional-fields').show();
+                    entryDiv.find('.course-code-field').show();
+                    // entryDiv.find('.fieldwork-fields').show();
+                }
+            } else if (category && categoryOptions[category] && subcategory && categoryOptions[category][subcategory]) {
+                Object.entries(categoryOptions[category][subcategory]).forEach(([activity, points]) => {
+                    activitySelect.append(`<option value="${activity}" data-points="${points}">${activity} (${points} points)</option>`);
+                });
+                entryDiv.find('.conditional-fields').show();
+            }
+            updatePoints(entryDiv);
+        }
+
+        function updatePoints(selectElement) {
+            recalculateAllEntries();
+        }
+
+        // Add new variables for semester type
+        let currentSubmissionType = '';
+        
+        // Move semester type selection handling to document ready
+        $(document).ready(function() {
+            // Initialize faculty dropdown
+            Object.entries(faculties).forEach(([code, name]) => {
+                $('#faculty').append(`<option value="${code}">${code} - ${name}</option>`);
+            });
+            
+            // Add first workload entry
+            addWorkloadEntry();
+            
+            // Add semester type selection handling
+            $('.semester-type-btn').click(function() {
+                const selectedType = $(this).data('type');
+                $('.semester-type-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                // Set submission type and show form
+                currentSubmissionType = selectedType;
+                $('#submissionType').val(selectedType);
+                $('#workloadFormContainer').slideDown();
+                $('#summaryTitle').text(`${selectedType} of Semester - Workload Summary`);
+                
+                // Clear form and reload summary
+                $('#workloadForm')[0].reset();
+                $('#workloadEntries').empty();
+                addWorkloadEntry();
+                loadWorkloadSummary();
+            });
+
+            $('#facultyType').change(function() {
+                calculateHours();
+            });
+
+            $('#facultyCategory').change(function() {
+                calculateHours();
+            });
+
+            initializeSemesterSelect();
+            loadPreviousSubmissions();
+            // Back to Dashboard button handler
+            $('#backToDashboardBtn').on('click', function() {
+                $('#submissionFormContainer').hide();
+                $('#dashboard').show();
+                fetchUserRecords && fetchUserRecords();
+            });
+        });
+
+        // Update submitForm function to include submission type
+        function submitForm() {
+            const submissionType = $('#submissionType').val();
+            const semester = $('#semesterSelect').val();
+            if (!submissionType || (submissionType !== 'Beginning' && submissionType !== 'Ending')) {
+                alert('Please select a valid submission type (Beginning or End of Year).');
+                return false;
+            }
+            if (!semester) {
+                alert('Please select a semester.');
+                return false;
+            }
+
+            const recordId = $('#workloadForm').data('record-id');
+            if (recordId) {
+                // If we are editing, we bypass the check and submit directly
+                actuallySubmitForm(recordId);
+                return false;
+            }
+
+            // Check for duplicate before submitting
+            let duplicateFound = false;
+            google.script.run.withSuccessHandler(exists => {
+                if (exists) {
+                    alert('You have already submitted for this semester and period.');
+                    duplicateFound = true;
+                    return false;
+                } else {
+                    // Proceed with submission as before
+                    actuallySubmitForm();
+                }
+            }).checkRecordExists(userEmail, semester, submissionType);
+                return false;
+            }
+            
+        function actuallySubmitForm(recordId = null) {
+            const entries = [];
+            const adjustments = [];
+            const personName = $('#personName').val();
+            const faculty = $('#faculty').val();
+            const yearsWorking = $('#yearsWorking').val();
+            const submissionType = $('#submissionType').val();
+            const facultyCategory = $('#facultyCategory').val();
+            const facultyType = $('#facultyType').val();
+            const semester = $('#semesterSelect').val();
+            const coursePrepHours = $('#coursePrepHours').val();
+            // const advisingHours = $('#advisingHours').val();
+            
+            if (!submissionType || (submissionType !== 'Beginning' && submissionType !== 'Ending')) {
+                alert('Please select a valid submission type (Beginning or End of Year).');
+                return false;
+            }
+            if (!semester) {
+                alert('Please select a semester.');
+                return false;
+            }
+            
+            let hasError = false;
+            $('.workload-entry').each(function(index) {
+                const entry = $(this);
+                const category = entry.find('.category').val();
+                const subcategory = entry.find('.subcategory').val();
+                const activity = entry.find('.activity').val();
+                
+                if (!category || !subcategory || !activity) {
+                    hasError = true;
+                    return false;
+                }
+                
+                const basePoints = parseFloat(entry.find('.base-points').val()) || 0;
+                const adjustmentPoints = parseFloat(entry.find('.adjustment-points').val()) || 0;
+                const totalPoints = parseFloat(entry.find('.total-points').val()) || 0;
+                const description = entry.find('.description').val();
+                const courseCode = entry.find('.course-code').val() || '';
+                const seiScore = entry.find('.sei-score').val() || '';
+                const studentCount = entry.find('.student-count').val() || '';
+                
+                const entryData = {
+                    personName,
+                    faculty,
+                    yearsWorking,
+                    facultyCategory,
+                    facultyType,
+                    submissionType: submissionType, // Always set
+                    semester: semester,
+                    category,
+                    subcategory,
+                    activity,
+                    description,
+                    courseCode,
+                    seiScore,
+                    studentCount,
+                    quantity: entry.find('.quantity').val() || '1',
+                    creditHours: entry.find('.credit-hours').val() || '',
+                    practicumType: entry.find('.practicum-type').val() || '',
+                    practicumStudents: entry.find('.practicum-students').val() || '',
+                    practicumWeeks: entry.find('.practicum-weeks').val() || '',
+                    facultySelect: entry.find('.faculty-select').val() || '',
+                    internCount: entry.find('.intern-count').val() || '',
+                    programLevel: entry.find('.program-level').val() || '',
+                    courseSelect: entry.find('.course-select').val() || '',
+                    fhscourseSelect: entry.find('.fhscourse-select').val() || '',
+                    basePoints,
+                    adjustmentPoints,
+                    totalPoints,
+                    coursePrepHours,
+                    // advisingHours,
+                    submissionDate: new Date().toISOString()
+                };
+                if (recordId) {
+                    entryData.recordId = recordId;
+                }
+                entries.push(entryData);
+            });
+
+            // Collect adjustment entries
+            $('.adjustment-entry').each(function() {
+                const entry = $(this);
+                const type = entry.find('.adjustment-type').val();
+                const points = parseInt(entry.find('.adjustment-points').val()) || 0;
+                if (type && points > 0) {
+                    adjustments.push({
+                        type: type,
+                        points: points,
+                        details: type === 'Thesis Advising' ? {
+                            studentType: entry.find('.thesis-student-type').val(),
+                            studentCount: entry.find('.thesis-student-count').val(),
+                            credit: entry.find('.mphil-credit').val()
+                        } : {
+                            value: entry.find('.adjustment-value').val()
+                        }
+                    });
+                }
+            });
+
+            if (entries.length > 0) {
+                entries[0].adjustments = adjustments;
+            }
+            
+            if (hasError) {
+                alert('Please fill in all required fields for each entry.');
+                return false;
+            }
+            if (entries.length === 0) {
+                alert('Please add at least one workload entry.');
+                return false;
+            }
+
+            // Debug: log the submissionType and entries
+            console.log('Submitting with submissionType:', submissionType, entries);
+            
+            try {
+                google.script.run
+                    .withSuccessHandler(response => {
+                        if (response.success) {
+                            alert(response.message);
+                            $('#workloadForm')[0].reset();
+                            $('#workloadEntries').empty();
+                            addWorkloadEntry();
+                            loadWorkloadSummary && loadWorkloadSummary();
+                        } else {
+                            alert(response.message || 'Error submitting workloads');
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        console.error('Submission error:', error);
+                        alert('Error submitting workloads: ' + error.message);
+                    })
+                    .submitAllWorkloads(entries);
+            } catch (error) {
+                console.error('Error during submission:', error);
+                alert('Error preparing submission: ' + error.message);
+            }
+            return false;
+        }
+
+        // Update loadWorkloadSummary to include submission type
+        function loadWorkloadSummary() {
+            if (!currentSubmissionType) {
+                $('#summaryTable tbody').html('<tr><td colspan="11" class="text-center">Please select a submission type</td></tr>');
+                return;
+            }
+            
+            google.script.run
+                .withSuccessHandler(data => {
+                    const summaryTable = $('#summaryTable tbody');
+                    summaryTable.empty();
+                    
+                    if (data && data.length > 0) {
+                        data.forEach(row => {
+                            const tr = $('<tr>');
+                            tr.append($('<td>').text(row.name));
+                            tr.append($('<td>').text(row.faculty));
+                            tr.append($('<td>').text(row.teaching));
+                            tr.append($('<td>').text(row.research));
+                            tr.append($('<td>').text(row.service));
+                            tr.append($('<td>').text(row.professional));
+                            tr.append($('<td>').text(row.leadership));
+                            tr.append($('<td>').text(row.baseTotal));
+                            tr.append($('<td>').text(row.adjustments));
+                            tr.append($('<td>').text(row.total));
+                            tr.append($('<td>').text(row.status));
+                            summaryTable.append(tr);
+                        });
+                    } else {
+                        summaryTable.append(`<tr><td colspan="11" class="text-center">No ${currentSubmissionType.toLowerCase()} of semester entries found</td></tr>`);
+                    }
+                })
+                .withFailureHandler(error => {
+                    console.error('Error loading summary:', error);
+                    $('#summaryTable tbody').html('<tr><td colspan="11" class="text-center text-danger">Error loading summary</td></tr>');
+                })
+                .getWorkloadSummary(currentSubmissionType);
+        }
+
+
+
+        function updateFacultyTypes() {
+            const category = $('#facultyCategory').val();
+            const typeSelect = $('#facultyType');
+            typeSelect.empty();
+            typeSelect.append('<option value="">Select Faculty Type</option>');
+            
+            if (category && facultyCategories[category]) {
+                facultyCategories[category].types.forEach(type => {
+                    typeSelect.append(`<option value="${type}">${type}</option>`);
+                });
+            }
+        }
+
+        function initializeSemesterSelect() {
+            const currentYear = new Date().getFullYear();
+            const semesterSelect = $('#semesterSelect');
+            
+            // Add options for current and next year
+            for (let year = currentYear - 1; year <= currentYear; year++) {
+                semesterSelect.append(`<option value="${year}-1">${year} Semester 1</option>`);
+                semesterSelect.append(`<option value="${year}-2">${year} Semester 2</option>`);
+            }
+            
+            // Set default to current semester
+            const currentSemester = google.script.run.getCurrentSemester();
+            semesterSelect.val(currentSemester);
+        }
+
+        function loadPreviousSubmissions() {
+            google.script.run
+                .withSuccessHandler(data => {
+                    const table = $('#previousSubmissionsTable tbody');
+                    table.empty();
+                    
+                    if (Object.keys(data).length === 0) {
+                        table.append('<tr><td colspan="5" class="text-center">No previous submissions found</td></tr>');
+                        return;
+                    }
+                    
+                    Object.entries(data).forEach(([semester, record]) => {
+                        ['start', 'end'].forEach(period => {
+                            if (record[period]) {
+                                const tr = $('<tr>');
+                                tr.append($('<td>').text(semester));
+                                tr.append($('<td>').text(period === 'start' ? 'Beginning of Semester' : 'End of Semester'));
+                                tr.append($('<td>').text(new Date(record[period].submissionDate).toLocaleDateString()));
+                                tr.append($('<td>').text(record[period].status || 'Pending'));
+                                tr.append($('<td>').html(`
+                                    <button class="btn btn-sm btn-primary" onclick="viewSubmission('${semester}', '${period}')">
+                                        View
+                                    </button>
+                                `));
+                                table.append(tr);
+                            }
+                        });
+                    });
+                    
+                    $('#previousSubmissions').show();
+                })
+                .withFailureHandler(error => {
+                    console.error('Error loading previous submissions:', error);
+                })
+                .getUserWorkloadRecords(userEmail);
+        }
+
+        function viewSubmission(semester, period) {
+            // Implement view submission logic
+            // This could open a modal with the submission details
+            console.log(`Viewing ${period} submission for ${semester}`);
+        }
+
+        let userEmail = '';
+        let userRecords = [];
+
+        $(document).ready(function() {
+            initializeApp();
+            // ...existing ready code for faculty dropdown, etc...
+        });
+
+
+        function initializeApp() {
+            console.log('Initializing app...');
+            google.script.run
+                .withSuccessHandler(email => {
+                    console.log('Got user email:', email);
+                    userEmail = email;
+                    google.script.run
+                        .withSuccessHandler(isAuthorized => {
+                            console.log('Authorization check result:', isAuthorized);
+                            if (!isAuthorized) {
+                                showUnauthorizedMessage();
+                                return;
+                            }
+                            google.script.run
+                                .withSuccessHandler(role => {
+                                    console.log('Got user role:', role);
+                                    fetchUserRecords();
+                                })
+                                .getUserRole(email);
+                        })
+                        .isUserAuthorized(email);
+                })
+                .getCurrentUserEmail();
+}
+
+
+        function showUnauthorizedMessage() {
+            $('#dashboard').hide();
+            $('#submissionFormContainer').hide();
+            $('#unauthorized').show();
+        }
+
+        function fetchUserRecords() {
+            google.script.run
+                .withSuccessHandler(records => {
+                    userRecords = records;
+                    // Always show dashboard first, even for new users
+                        showDashboard(records);
+                    // If no records exist, show a message prompting to create a new entry
+                    if (records.length === 0) {
+                        $('#dashboardCards').html(`
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h4>Welcome to the Faculty Workload System!</h4>
+                                    <p>You haven't submitted any workload entries yet. Please:</p>
+                                    <ol>
+                                        <li>First, update your profile information using the "Edit Profile" button above.</li>
+                                        <li>Then, click "Add New Record" to submit your first workload entry.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        `);
+                    }
+                })
+                .getUserWorkloadRecords(userEmail);
+        }
+
+        function showDashboard(records) {
+            $('#dashboard').show();
+            $('#submissionFormContainer').hide();
+            $('#deanDashboard').hide();
+            $('#chairDashboard').hide();
+
+            // Determine user role
+            google.script.run.withSuccessHandler(role => {
+                if (role === 'Chair') {
+                    renderChairDashboard(records);
+                } else if (role === 'Dean') {
+                    // google.script.run.withSuccessHandler(html => {
+                    //     $('#deanDashboard').html(html).show();
+                        // Load dean submissions
+                        renderDeanDashboard();
+                    // }).getDeanDashboardHtml();
+                } else {
+                    renderFacultyDashboard(records);
+                }
+                // Check if user is authorized for reports and render Reports section
+                checkAndRenderReports();
+            }).getUserRole(userEmail);
+        }
+
+        function checkAndRenderReports() {
+            google.script.run.withSuccessHandler(isAuthorized => {
+                if (isAuthorized) {
+                    renderReportsSection();
+                }
+            }).isReportAuthorized(userEmail);
+        }
+
+        function renderReportsSection() {
+            const reportsHtml = `
+                <div class="row mt-5">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Reports</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-3">Download submission reports as Excel files.</p>
+                                <button class="btn btn-primary" onclick="downloadSubmissionReport()">
+                                    <i class="bi bi-download"></i> Download Submission Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#dashboard').append(reportsHtml);
+        }
+
+        function downloadSubmissionReport() {
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';
+            
+            google.script.run.withSuccessHandler(result => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+                if (result.success) {
+                    // Create download using data URI
+                    const csvContent = result.content;
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    if (link.download !== undefined) {
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', result.filename);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } else {
+                        // Fallback for older browsers
+                        const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+                        window.open(dataUri);
+                    }
+                } else {
+                    alert('Error generating report: ' + result.message);
+                }
+            }).withFailureHandler(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                alert('Error generating report: ' + error.message);
+            }).generateSubmissionReportExcel();
+        }
+
+        function renderFacultyDashboard(records) {
+            // Add profile section and "My Submissions" for faculty
+            let dashboardHtml = `
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Your Profile</h5>
+                                <button class="btn btn-primary" onclick="editProfile()">Edit Profile</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p><strong>Name:</strong> <span id="profileName"></span></p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Faculty:</strong> <span id="profileFaculty"></span></p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>Years at UB:</strong> <span id="profileYears"></span></p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Faculty Category:</strong> <span id="profileCategory"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Faculty Type:</strong> <span id="profileType"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Saved Drafts</h3>
+                    </div>
+                </div>
+                <div id="savedDrafts" class="row"></div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Your Submissions</h3>
+                    </div>
+                </div>
+                <div id="dashboardCards" class="row"></div>
+                <button class="btn btn-primary my-3" onclick="showSubmissionForm()">Add New Record</button>
+                <div id="workloadSubmissionsTableSection"></div>
+            `;
+            $('#dashboard').html(dashboardHtml);
+            loadProfileData();
+            loadDrafts();
+            // Display submission cards as before
+            if (!records || records.length === 0) {
+                $('#dashboardCards').html(`
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <h4>Welcome to the Faculty Workload System!</h4>
+                            <p>You haven't submitted any workload entries yet. Please:</p>
+                            <ol>
+                                <li>First, update your profile information using the "Edit Profile" button above.</li>
+                                <li>Then, click "Add New Record" to submit your first workload entry.</li>
+                            </ol>
+                        </div>
+                    </div>
+                `);
+            } else {
+                records.forEach(record => {
+                    $('#dashboardCards').append(createFacultySemesterCard(userEmail, record));
+                });
+            }
+            // Render the department table in the same place as the old summary table
+            renderFacultyDepartmentTable();
+        }
+
+        function renderChairDashboard(records) {
+            console.log('Rendering chair dashboard...');
+            // Profile and My Submissions (same as faculty)
+            renderFacultyDashboard(records);
+            $('#workloadSubmissionsTableSection').hide();
+            
+            // Add Faculty Submissions section with table
+            const facultySubmissionsHtml = `
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h3>Faculty Submissions</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="facultySubmissionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Semester</th>
+                                        <th>Submission Date</th>
+                                        <th>Status</th>
+                                        <th>Total Points</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#dashboard').append(facultySubmissionsHtml);
+            
+            // Fetch and display all submissions for faculty under this chair
+            console.log('Fetching faculty under chair:', userEmail);
+            google.script.run
+                .withSuccessHandler(facultyList => {
+                    console.log('Got faculty list:', facultyList);
+                    if (!facultyList || facultyList.length === 0) {
+                        $('#facultySubmissionsTable tbody').append(`
+                            <tr>
+                                <td colspan="7" class="text-center">No faculty members found under your department</td>
+                            </tr>
+                        `);
+                        return;
+                    }
+                    
+                    // For each faculty member, fetch their submissions
+                    facultyList.forEach(facultyEmail => {
+                        google.script.run
+                            .withSuccessHandler(data => {
+                                console.log('Received data for faculty:', facultyEmail, data);
+                                const table = $('#facultySubmissionsTable tbody');
+                                
+                                if (Array.isArray(data) && data.length > 0) {
+                                    // For each submission record
+                                    data.forEach(record => {
+                                        // Determine which period to show (end or start)
+                                        let period = record.end && Array.isArray(record.end) && record.end.length > 0 ? 'end' : 'start';
+                                        let entries = record[period] && Array.isArray(record[period]) ? record[period] : [];
+                                        if (!entries.length) return;
+                                        
+                                        // Calculate total points
+                                        let totalPoints = entries.length > 0 ? entries[entries.length - 1].totalPoints || 0 : 0;
+                                        let status = entries[0].status || 'Pending';
+                                        let submissionDate = entries[0].submissionDate ? new Date(entries[0].submissionDate).toLocaleDateString() : '';
+                                        
+                                        table.append(`
+                                            <tr>
+                                                <td>${getUserName(facultyEmail)}</td>
+                                                <td>${facultyEmail}</td>
+                                                <td>${record.semester || ''}</td>
+                                                <td>${submissionDate}</td>
+                                                <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                                                <td>${totalPoints}</td>
+                                                <td>
+                                                    <button class="btn btn-primary btn-sm" onclick="viewFacultySemesterDetails('${facultyEmail}', '${record.semester}', '${period}')">
+                                                        View Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `);
+                                    });
+                                } else {
+                                    // If no submissions found for this faculty
+                                    table.append(`
+                                        <tr>
+                                            <td>${getUserName(facultyEmail)}</td>
+                                            <td>${facultyEmail}</td>
+                                            <td colspan="5" class="text-center">No submissions found</td>
+                                        </tr>
+                                    `);
+                                }
+                            })
+                            .withFailureHandler(error => {
+                                console.error('Error fetching faculty data:', error);
+                                $('#facultySubmissionsTable tbody').append(`
+                                    <tr>
+                                        <td>${getUserName(facultyEmail)}</td>
+                                        <td>${facultyEmail}</td>
+                                        <td colspan="5" class="text-center text-danger">
+                                            Error loading data: ${error.message || 'Unknown error'}
+                                        </td>
+                                    </tr>
+                                `);
+                            })
+                            .getFacultyWorkloadData(facultyEmail);
+                    });
+                })
+                .withFailureHandler(error => {
+                    console.error('Error fetching faculty list:', error);
+                    $('#facultySubmissionsTable tbody').html(`
+                        <tr>
+                            <td colspan="7" class="text-center text-danger">
+                                Error loading faculty list: ${error.message || 'Unknown error'}
+                            </td>
+                        </tr>
+                    `);
+                })
+                .getFacultyUnderUser(userEmail);
+        }
+
+        function renderDeanDashboard() {
+            // Check if this is senriquez@ub.edu.bz or luis.herrera@ub.edu.bz
+            if (userEmail === 'luis.herrera@ub.edu.bz') {
+                // Only show submissions table for senriquez and luis
+                let dashboardHtml = `
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h3>Faculty & Chair Submissions</h3>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="deanSubmissionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Submission Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                `;
+                $('#dashboard').html(dashboardHtml);
+                // Fetch and display all submissions
+                google.script.run.withSuccessHandler(submissions => {
+                    const table = $('#deanSubmissionsTable tbody');
+                    table.empty();
+                    if (!submissions || submissions.length === 0) {
+                        table.append('<tr><td colspan="5" class="text-center">No submissions found</td></tr>');
+                        return;
+                    }
+                    submissions.forEach(sub => {
+                        let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
+                        let entry = sub[period] && Array.isArray(sub[period]) ? sub[period][0] : null;
+                        let status = entry ? (entry.status || 'Pending') : 'Pending';
+                        let submissionDate = entry ? (entry.submissionDate ? new Date(entry.submissionDate).toLocaleDateString() : '') : '';
+                        let role = sub.role || 'Faculty';
+                        table.append(`
+                            <tr>
+                                <td>${getUserName(sub.email)}</td>
+                                <td>${role}</td>
+                                <td>${submissionDate}</td>
+                                <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" onclick="viewDeanSubmissionDetails('${sub.email}','${sub.semester}','${period}')">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }).getAllSubmissionsForDean(userEmail);
+            } else {
+                // For other deans, show profile, submissions, and faculty/chair submissions
+                // Fetch the dean's own records and render the faculty dashboard with them
+                google.script.run.withSuccessHandler(records => {
+                    renderFacultyDashboard(records);
+                    $('#workloadSubmissionsTableSection').hide();
+                    // Then add the faculty & chair submissions section
+                    const submissionsHtml = `
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <h3>Faculty & Chair Submissions</h3>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="deanSubmissionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Submission Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    `;
+                    $('#dashboard').append(submissionsHtml);
+                    // Fetch and display submissions for their faculty
+                    google.script.run.withSuccessHandler(submissions => {
+                        const table = $('#deanSubmissionsTable tbody');
+                        table.empty();
+                        if (!submissions || submissions.length === 0) {
+                            table.append('<tr><td colspan="5" class="text-center">No submissions found</td></tr>');
+                            return;
+                        }
+                        submissions.forEach(sub => {
+                            let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
+                            let entry = sub[period] && Array.isArray(sub[period]) ? sub[period][0] : null;
+                            let status = entry ? (entry.status || 'Pending') : 'Pending';
+                            let submissionDate = entry ? (entry.submissionDate ? new Date(entry.submissionDate).toLocaleDateString() : '') : '';
+                            let role = sub.role || 'Faculty';
+                            table.append(`
+                                <tr>
+                                    <td>${getUserName(sub.email)}</td>
+                                    <td>${role}</td>
+                                    <td>${submissionDate}</td>
+                                    <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm" onclick="viewDeanSubmissionDetails('${sub.email}','${sub.semester}','${period}')">
+                                            View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }).getAllSubmissionsForDean(userEmail);
+                }).getUserWorkloadRecords(userEmail);
+            }
+        }
+
+        function viewDeanSubmissionDetails(email, semester, period) {
+            // Fetch all records for the faculty, find the correct semester, and show details for the selected period
+            google.script.run.withSuccessHandler(records => {
+                let html = `<div class=\"submission-details\">`;
+                let found = false;
+                let currentComment = '';
+                let currentRecommendation = '';
+                let currentStatus = '';
+                if (Array.isArray(records)) {
+                    const record = records.find(r => r.semester === semester);
+                    if (record && record[period] && Array.isArray(record[period])) {
+                        found = true;
+                        // Get existing comments/recommendations/status if present
+                        if (record.comments && record.comments[semester] && record.comments[semester][period]) {
+                            currentComment = record.comments[semester][period].comment || '';
+                            currentRecommendation = record.comments[semester][period].recommendation || '';
+                            currentStatus = record.comments[semester][period].status || '';
+                        } else if (record[period][0]?.status) {
+                            currentStatus = record[period][0].status;
+                        }
+                        html += `<h5 class=\"mt-3\">${period === 'start' ? 'Beginning of Semester' : 'End of Year'} (${semester})</h5>`;
+                        record[period].forEach((entry, idx) => {
+                            html += `
+                                <div class=\"card mb-3\">
+                                    <div class=\"card-header d-flex justify-content-between align-items-center\">
+                                        <h6 class=\"mb-0\">Entry ${idx + 1}</h6>
+                                    </div>
+                                    <div class=\"card-body\">
+                                        <div class=\"row\">
+                                            <div class=\"col-md-6\">
+                                                <p><strong>Category:</strong> ${entry.category}</p>
+                                                <p><strong>Subcategory:</strong> ${entry.subcategory}</p>
+                                                <p><strong>Activity:</strong> ${entry.activity}</p>
+                                                ${entry.courseCode ? `<p><strong>Course Code:</strong> ${entry.courseCode}</p>` : ''}
+                                            </div>
+                                            <div class=\"col-md-6\">
+                                                <p><strong>Base Points:</strong> ${entry.basePoints}</p>
+                                                <p><strong>Adjustment Points:</strong> ${entry.adjustmentPoints}</p>
+                                                <p><strong>Total Points:</strong> ${entry.totalPoints}</p>
+                                                ${entry.seiScore ? `<p><strong>SEI Score:</strong> ${entry.seiScore}</p>` : ''}
+                                                ${entry.studentCount ? `<p><strong>Student Count:</strong> ${entry.studentCount}</p>` : ''}
+                                            </div>
+                                        </div>
+                                        ${entry.description ? `<p><strong>Description:</strong> ${entry.description}</p>` : ''}
+                                        ${entry.adjustments && entry.adjustments.length > 0 ? `
+                                            <div class=\"mt-3\">
+                                                <h6>Adjustments:</h6>
+                                                <ul>
+                                                    ${entry.adjustments.map(adj => `
+                                                        <li>${adj.type}: ${adj.points} points
+                                                            ${adj.details ? ` (${Object.entries(adj.details).map(([k,v]) => `${k}: ${v}`).join(', ')})` : ''}
+                                                        </li>
+                                                    `).join('')}
+                                                </ul>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>`;
+                        });
+                        // Comments dropdown and recommendations textarea
+                        html += `
+                            <div class=\"mb-3\">
+                                <label class=\"form-label\"><strong>Comments</strong></label>
+                                <select id=\"modalCommentSelect\" class=\"form-select\">
+                                    <option value=\"\">Select a comment</option>
+                                    <option value=\"meets\" ${currentComment === 'meets' ? 'selected' : ''}>This workload meets the required expectations</option>
+                                    <option value=\"not_meet\" ${currentComment === 'not_meet' ? 'selected' : ''}>This workload does not meet the required expectations</option>
+                                </select>
+                            </div>
+                            <div class=\"mb-3\">
+                                <label class=\"form-label\"><strong>Recommendations</strong></label>
+                                <textarea id=\"modalRecommendationTextarea\" class=\"form-control\" rows=\"3\">${currentRecommendation}</textarea>
+                            </div>
+                            <div class=\"d-flex justify-content-end gap-2\">
+                                <button class=\"btn btn-success\" id=\"modalApproveBtn\" ${currentStatus === 'approved' ? 'disabled' : ''}>Approve</button>
+                                <button class=\"btn btn-danger\" id=\"modalRejectBtn\" ${currentStatus === 'rejected' ? 'disabled' : ''}>Reject</button>
+                            </div>
+                        `;
+                    }
+                }
+                if (!found) {
+                    html += '<div class=\"alert alert-info\">No data found for this period.</div>';
+                }
+                html += '</div>';
+                $('#detailsModal .modal-body').html(html);
+                var modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                modal.show();
+
+                // Add event listeners for approve/reject
+                setTimeout(function() {
+                    $('#modalApproveBtn').off('click').on('click', function() {
+                        saveChairCommentRecommendation(email, semester, period, 'Approved');
+                    });
+                    $('#modalRejectBtn').off('click').on('click', function() {
+                        saveChairCommentRecommendation(email, semester, period, 'Denied');
+                    });
+                }, 300);
+            }).getFacultyWorkloadData(email);
+        }
+
+        // Add profile management functions
+        function loadProfileData() {
+            google.script.run
+                .withSuccessHandler(profile => {
+                    if (profile) {
+                        $('#profileName').text(profile.name || 'Not set');
+                        $('#profileFaculty').text(profile.faculty || 'Not set');
+                        $('#profileYears').text(profile.yearsWorking || 'Not set');
+                        $('#profileCategory').text(profile.facultyCategory || 'Not set');
+                        $('#profileType').text(profile.facultyType || 'Not set');
+                    }
+                })
+                .getUserProfile();
+        }
+
+        function editProfile() {
+            google.script.run
+                .withSuccessHandler(profile => {
+                    let html = `
+                        <div class="modal fade" id="profileModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Profile</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="profileForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="profileNameInput" value="${profile?.name || ''}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Faculty</label>
+                                                <select class="form-control" id="profileFacultyInput" required>
+                                                    ${Object.entries(faculties).map(([code, name]) => 
+                                                        `<option value="${code}" ${profile?.faculty === code ? 'selected' : ''}>${code} - ${name}</option>`
+                                                    ).join('')}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Years at UB</label>
+                                                <input type="number" class="form-control" id="profileYearsInput" value="${profile?.yearsWorking || ''}" min="1" max="50" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Faculty Category</label>
+                                                <select class="form-control" id="profileCategoryInput" required onchange="updateProfileFacultyTypes()">
+                                                    <option value="">Select Category</option>
+                                                    <option value="Non Tenure" ${profile?.facultyCategory === 'Non Tenure' ? 'selected' : ''}>Non Tenure</option>
+                                                    <option value="Tenure" ${profile?.facultyCategory === 'Tenure' ? 'selected' : ''}>Tenure</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Faculty Type</label>
+                                                <select class="form-control" id="profileTypeInput" required>
+                                                    <option value="">Select Category First</option>
+                                                </select>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Remove existing modal if any
+                    $('#profileModal').remove();
+                    
+                    // Add new modal to body
+                    $('body').append(html);
+                    
+                    // Initialize faculty types if category is selected
+                    if (profile?.facultyCategory) {
+                        updateProfileFacultyTypes(profile.facultyType);
+                    }
+                    
+                    // Show modal
+                    var modal = new bootstrap.Modal(document.getElementById('profileModal'));
+                    modal.show();
+                })
+                .getUserProfile();
+        }
+
+        function updateProfileFacultyTypes(selectedType = '') {
+            const category = $('#profileCategoryInput').val();
+            const typeSelect = $('#profileTypeInput');
+            typeSelect.empty();
+            typeSelect.append('<option value="">Select Faculty Type</option>');
+            
+            if (category && facultyCategories[category]) {
+                facultyCategories[category].types.forEach(type => {
+                    typeSelect.append(`<option value="${type}" ${type === selectedType ? 'selected' : ''}>${type}</option>`);
+                });
+            }
+        }
+
+        function saveProfile() {
+            const profileData = {
+                name: $('#profileNameInput').val(),
+                faculty: $('#profileFacultyInput').val(),
+                yearsWorking: $('#profileYearsInput').val(),
+                facultyCategory: $('#profileCategoryInput').val(),
+                facultyType: $('#profileTypeInput').val()
+            };
+            
+            google.script.run
+                .withSuccessHandler(response => {
+                    if (response.success) {
+                        // Close modal
+                        $('#profileModal').modal('hide');
+                        // Refresh profile display
+                        loadProfileData();
+                        // Show success message
+                        alert('Profile updated successfully');
+                    } else {
+                        alert('Error updating profile: ' + response.message);
+                    }
+                })
+                .withFailureHandler(error => {
+                    console.error('Error saving profile:', error);
+                    alert('Error saving profile: ' + error.message);
+                })
+                .saveUserProfile(profileData);
+        }
+
+        // Modify showSubmissionForm to use profile data
+        function showSubmissionForm(recordId = null, period = null) {
+            $('#dashboard').hide();
+            $('#submissionFormContainer').show();
+            $('#workloadForm')[0].reset();
+            $('#workloadEntries').empty();
+            $('#workloadForm').data('record-id', recordId);
+
+
+            google.script.run.withSuccessHandler(profile => {
+                if (profile) {
+                    $('#personName').val(profile.name);
+                    $('#faculty').val(profile.faculty);
+                    $('#yearsWorking').val(profile.yearsWorking);
+                    $('#facultyCategory').val(profile.facultyCategory);
+                    updateFacultyTypes();
+                    $('#facultyType').val(profile.facultyType);
+                    calculateHours();
+                }
+
+                if (recordId && period) {
+                    const record = userRecords.find(r => r.id === recordId);
+                    if (record) {
+                        const data = period === 'start' ? record.start : record.end;
+                        $('#semesterSelect').val(record.semester).prop('disabled', true);
+                        const submissionType = period === 'start' ? 'Beginning' : 'Ending';
+                        $('#submissionType').val(submissionType).prop('disabled', true);
+
+                        if (data && Array.isArray(data)) {
+                            data.forEach(entry => {
+                                addWorkloadEntry();
+                                const entryDiv = $('.workload-entry').last();
+                                entryDiv.find('.category').val(entry.category).trigger('change');
+                                setTimeout(() => {
+                                    entryDiv.find('.subcategory').val(entry.subcategory).trigger('change');
+                                    setTimeout(() => {
+                                        entryDiv.find('.activity').val(entry.activity).trigger('change');
+                                        entryDiv.find('.description').val(entry.description);
+                                        entryDiv.find('.course-code').val(entry.courseCode);
+                                        entryDiv.find('.sei-score').val(entry.seiScore);
+                                        entryDiv.find('.student-count').val(entry.studentCount);
+                                        entryDiv.find('.quantity').val(entry.quantity || 1);
+                                        entryDiv.find('.credit-hours').val(entry.creditHours);
+                                        entryDiv.find('.practicum-type').val(entry.practicumType);
+                                        entryDiv.find('.practicum-students').val(entry.practicumStudents);
+                                        entryDiv.find('.practicum-weeks').val(entry.practicumWeeks);
+                                        entryDiv.find('.faculty-select').val(entry.facultySelect).trigger('change');
+                                        entryDiv.find('.intern-count').val(entry.internCount);
+                                        entryDiv.find('.program-level').val(entry.programLevel);
+                                        entryDiv.find('.course-select').val(entry.courseSelect);
+                                        entryDiv.find('.fhscourse-select').val(entry.fhscourseSelect);
+                                    }, 200);
+                                }, 200);
+                            });
+                        }
+                    }
+                } else {
+                    $('#semesterSelect').val('').prop('disabled', false);
+                    $('#submissionType').val('').prop('disabled', false);
+                    addWorkloadEntry();
+                }
+                $('#emailField').val(userEmail).prop('readonly', true);
+                setTimeout(() => {
+                    recalculateAllEntries();
+                }, 1000);
+            }).getUserProfile();
+        }
+
+        function viewDetails(recordId, period) {
+            const record = userRecords.find(r => r.id === recordId);
+            const data = period === 'start' ? record.start : record.end;
+            let html = '<div class="submission-details">';
+             html += `
+                <div class="d-flex justify-content-end mb-3">
+                    <button class="btn btn-primary me-2" onclick="editSubmission('${recordId}', '${period}')">Edit Submission</button>
+                    <button class="btn btn-danger" onclick="deleteSubmission('${recordId}', '${period}')">Delete Submission</button>
+                </div>
+            `;
+            
+            if (data && Array.isArray(data)) {
+                data.forEach((entry, idx) => {
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Entry ${idx + 1}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Category:</strong> ${entry.category}</p>
+                                        <p><strong>Subcategory:</strong> ${entry.subcategory}</p>
+                                        <p><strong>Activity:</strong> ${entry.activity}</p>
+                                        ${entry.courseCode ? `<p><strong>Course Code:</strong> ${entry.courseCode}</p>` : ''}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Base Points:</strong> ${entry.basePoints}</p>
+                                        <p><strong>Adjustment Points:</strong> ${entry.adjustmentPoints}</p>
+                                        <p><strong>Total Points:</strong> ${entry.totalPoints}</p>
+                                        ${entry.seiScore ? `<p><strong>SEI Score:</strong> ${entry.seiScore}</p>` : ''}
+                                        ${entry.studentCount ? `<p><strong>Student Count:</strong> ${entry.studentCount}</p>` : ''}
+                                    </div>
+                                </div>
+                                ${entry.description ? `<p><strong>Description:</strong> ${entry.description}</p>` : ''}
+                                ${entry.adjustments && entry.adjustments.length > 0 ? `
+                                    <div class="mt-3">
+                                        <h6>Adjustments:</h6>
+                                        <ul>
+                                            ${entry.adjustments.map(adj => `
+                                                <li>${adj.type}: ${adj.points} points
+                                                    ${adj.details ? ` (${Object.entries(adj.details).map(([k,v]) => `${k}: ${v}`).join(', ')})` : ''}
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>`;
+                });
+            } else if (data) {
+                html += `
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>Status:</strong> ${data.status || 'Pending'}</p>
+                            <p><strong>Submission Date:</strong> ${new Date(data.submissionDate).toLocaleDateString()}</p>
+                        </div>
+                    </div>`;
+            } else {
+                html = '<div class="alert alert-info">No data found for this period.</div>';
+            }
+            
+            html += '</div>';
+            $('#detailsModal .modal-body').html(html);
+            var modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+        }
+
+        function editSubmission(recordId, period) {
+            // First, hide the modal immediately.
+            var modal = bootstrap.Modal.getInstance(document.getElementById('detailsModal'));
+            if (modal) {
+                modal.hide();
+            }
+
+            // Then, show the submission form.
+            showSubmissionForm(recordId, period);
+        }
+
+        function handleSemesterOrTypeChange() {
+            const semester = $('#semesterSelect').val();
+            const submissionType = $('#submissionType').val();
+            if (!semester || !submissionType) return;
+            // Check if record exists
+            google.script.run
+                .withSuccessHandler(exists => {
+                    if (exists) {
+                        alert('A record for this semester and period already exists. Please choose another or view details from your dashboard.');
+                        $('#semesterSelect').val('');
+                        $('#submissionType').val('');
+                        return;
+                    }
+                    // If it's an end of semester submission, check for beginning data
+                    if (submissionType === 'Ending') {
+                        google.script.run
+                            .withSuccessHandler(data => {
+                                if (!data || !data.start) {
+                                    alert('You must submit a Beginning of Semester record before submitting an End of Year record.');
+                                    $('#semesterSelect').val('');
+                                    $('#submissionType').val('');
+                                    return;
+                                }
+                                if (confirm('Would you like to load data from your beginning of semester submission?')) {
+                                    loadBeginningOfSemesterData(data);
+                                }
+                            })
+                            .withFailureHandler(error => {
+                                console.error('Error checking for beginning of semester data:', error);
+                                alert('Error checking for beginning of semester data. Please try again.');
+                            })
+                            .getWorkloadRecord(`${userEmail.replace(/\./g, ',')}_${semester}`);
+                    }
+                })
+                .withFailureHandler(error => {
+                    console.error('Error checking record existence:', error);
+                    alert('Error checking record existence. Please try again.');
+                })
+                .checkRecordExists(userEmail, semester, submissionType);
+        }
+
+        function loadBeginningOfSemesterData(data) {
+            if (!data || !data.start) return;
+            
+            // Clear existing entries
+            $('#workloadEntries').empty();
+            
+            // Load each entry from the beginning of semester
+            data.start.forEach(entry => {
+                addWorkloadEntry();
+                const entryDiv = $('.workload-entry').last();
+                
+                // Set basic fields
+                entryDiv.find('.category').val(entry.category).trigger('change');
+                entryDiv.find('.subcategory').val(entry.subcategory).trigger('change');
+                entryDiv.find('.activity').val(entry.activity);
+                entryDiv.find('.description').val(entry.description);
+                entryDiv.find('.course-code').val(entry.courseCode);
+                entryDiv.find('.quantity').val(entry.quantity || 1);
+                entryDiv.find('.credit-hours').val(entry.creditHours || '');
+                
+                // Set activity type and related fields
+                if (entry.activityType) {
+                    entryDiv.find('.activity-type').val(entry.activityType).trigger('change');
+                    
+                    if (entry.activityType === 'clinical') {
+                        entryDiv.find('.practicum-type').val(entry.practicumType);
+                        entryDiv.find('.practicum-students').val(entry.practicumStudents);
+                        entryDiv.find('.practicum-weeks').val(entry.practicumWeeks);
+                    } else if (entry.activityType === 'internship') {
+                        entryDiv.find('.program-level').val(entry.programLevel);
+                        entryDiv.find('.intern-count').val(entry.internCount);
+                        if (entry.programLevel === 'fhs') {
+                            entryDiv.find('.fhs-department').val(entry.fhsDepartment);
+                        }
+                    } else if (entry.activityType === 'fieldwork') {
+                        // entryDiv.find('.inclass-hours').val(entry.inclassHours);
+                        // entryDiv.find('.field-hours').val(entry.fieldHours);
+                    }
+                }
+                
+                // Load adjustments
+                if (entry.adjustments && entry.adjustments.length > 0) {
+                    $('#adjustmentEntries').empty();
+                    entry.adjustments.forEach(adjustment => {
+                        addAdjustmentEntry();
+                        const adjustmentDiv = $('.adjustment-entry').last();
+                        
+                        adjustmentDiv.find('.adjustment-type').val(adjustment.type).trigger('change');
+                        
+                        if (adjustment.type === 'Thesis Advising') {
+                            adjustmentDiv.find('.thesis-student-type').val(adjustment.details.studentType);
+                            adjustmentDiv.find('.thesis-student-count').val(adjustment.details.studentCount);
+                            if (adjustment.details.studentType === 'MPhil') {
+                                adjustmentDiv.find('.mphil-credit').val(adjustment.details.credit);
+                            }
+                        } else if (adjustmentTypes[adjustment.type].requiresValue) {
+                            adjustmentDiv.find('.adjustment-value').val(adjustment.details.value);
+                        }
+                    });
+                }
+                
+                // Update points
+                updatePoints(entryDiv);
+            });
+        }
+
+        function calculateHours() {
+
+        }
+
+        // Add delete entry function
+        function deleteSubmission(recordId, period) {
+            if (confirm('Are you sure you want to delete this entire submission? This action cannot be undone.')) {
+                google.script.run
+                    .withSuccessHandler(response => {
+                        if (response.success) {
+                            // Refresh the user records
+                            fetchUserRecords();
+                            // Close the modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('detailsModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Show success message
+                            alert('Submission deleted successfully');
+                        } else {
+                            alert('Error deleting submission: ' + response.message);
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        console.error('Error deleting submission:', error);
+                        alert('Error deleting submission: ' + error.message);
+                    })
+                    .deleteWorkloadSubmission(recordId, period);
+            }
+        }
+
+        // Add delete entry function to the server-side code
+        function deleteWorkloadSubmission(recordId, period) {
+            try {
+                // Delete the entire workload record for the semester
+                UrlFetchApp.fetch(`${BASE_URL}/workloads/${recordId}.json`, {
+                    method: 'DELETE'
+                });
+                return { success: true, message: 'Submission deleted successfully' };
+            } catch (error) {
+                console.error('Error in deleteWorkloadSubmission:', error);
+                return { success: false, message: error.message };
+            }
+        }
+
+    // Add new adjustment types and their rules
+    const adjustmentTypes = {
+        'New Course Development': {
+            points: 3,
+            requiresValue: false
+        },
+        'New Online/Blended Course Delivery': {
+            points: 2,
+            requiresValue: false
+        },
+        'Thesis Advising': {
+            points: 3,
+            requiresValue: true,
+            valueLabel: 'Number of Students',
+            rules: {
+                'Undergraduate': { studentsPerCredit: 5 },
+                'Master\'s': { studentsPerCredit: 3 },
+                'Doctoral': { studentsPerCredit: 2 },
+                'MPhil': { studentsPerCredit: 3 }
+            }
+        },
+        'Peer Review': {
+            points: 2,
+            requiresValue: false
+        }
+    };
+
+    function addAdjustmentEntry() {
+        const entryHtml = `
+            <div class="adjustment-entry card mb-3">
+                <div class="card-body">
+                    <button type="button" class="btn-close float-end" onclick="$(this).closest('.adjustment-entry').remove()"></button>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Adjustment Type</label>
+                            <select class="form-control adjustment-type" onchange="handleAdjustmentTypeChange(this)">
+                                <option value="">Select Adjustment Type</option>
+                                ${Object.keys(adjustmentTypes).map(type => 
+                                    `<option value="${type}">${type}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 adjustment-value-container" style="display: none;">
+                            <label class="form-label adjustment-value-label"></label>
+                            <input type="number" class="form-control adjustment-value" min="1" max="3">
+                        </div>
+                    </div>
+                    <div class="thesis-advising-container" style="display: none;">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Student Type</label>
+                                <select class="form-control thesis-student-type" onchange="handleThesisStudentTypeChange(this)">
+                                    <option value="">Select Student Type</option>
+                                    <option value="Undergraduate">Undergraduate</option>
+                                    <option value="Master's">Master's</option>
+                                    <option value="Doctoral">Doctoral</option>
+                                    <option value="MPhil">MPhil</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Number of Students</label>
+                                <input type="number" class="form-control thesis-student-count" min="1" max="3" onchange="calculateAdjustmentPoints($(this).closest('.adjustment-entry'))" oninput="calculateAdjustmentPoints($(this).closest('.adjustment-entry'))">
+                            </div>
+                        </div>
+                        <div class="row mb-3 mphil-credit-container" style="display: none;">
+                            <div class="col-md-12">
+                                <label class="form-label">Credit</label>
+                                <input type="number" class="form-control mphil-credit" min="1" max="3" onchange="calculateAdjustmentPoints($(this).closest('.adjustment-entry'))" oninput="calculateAdjustmentPoints($(this).closest('.adjustment-entry'))">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label class="form-label">Points</label>
+                            <input type="number" class="form-control adjustment-points" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#adjustmentEntries').append(entryHtml);
+    }
+
+    function handleAdjustmentTypeChange(selectElement) {
+        const entryDiv = $(selectElement).closest('.adjustment-entry');
+        const selectedType = $(selectElement).val();
+        const adjustmentType = adjustmentTypes[selectedType];
+        const valueContainer = entryDiv.find('.adjustment-value-container');
+        const thesisContainer = entryDiv.find('.thesis-advising-container');
+        
+        // Reset and hide all containers
+        valueContainer.hide();
+        thesisContainer.hide();
+        entryDiv.find('.adjustment-points').val('');
+        
+        if (!selectedType) return;
+        
+        if (selectedType === 'Thesis Advising') {
+            thesisContainer.show();
+        } else if (adjustmentType.requiresValue) {
+            valueContainer.show();
+            entryDiv.find('.adjustment-value-label').text(adjustmentType.valueLabel);
+            const valueInput = entryDiv.find('.adjustment-value');
+            valueInput.attr('max', adjustmentType.maxValue || 3);
+            valueInput.on('change input', function() {
+                calculateAdjustmentPoints(entryDiv);
+            });
+        } else {
+            // For fixed point adjustments
+            entryDiv.find('.adjustment-points').val(adjustmentType.points);
+        }
+    }
+
+    function handleThesisStudentTypeChange(selectElement) {
+        const entryDiv = $(selectElement).closest('.adjustment-entry');
+        const selectedType = $(selectElement).val();
+        const mphilContainer = entryDiv.find('.mphil-credit-container');
+        
+        mphilContainer.hide();
+        if (selectedType === 'MPhil') {
+            mphilContainer.show();
+        }
+        
+        calculateAdjustmentPoints(entryDiv);
+    }
+
+    function calculateAdjustmentPoints(entryDiv) {
+        const selectedType = entryDiv.find('.adjustment-type').val();
+        const adjustmentType = adjustmentTypes[selectedType];
+        
+        if (!selectedType) return;
+        
+        if (selectedType === 'Thesis Advising') {
+            const studentType = entryDiv.find('.thesis-student-type').val();
+            const studentCount = parseInt(entryDiv.find('.thesis-student-count').val()) || 0;
+            
+            if (!studentType || !studentCount) {
+                entryDiv.find('.adjustment-points').val('');
+                return;
+            }
+            
+            if (studentType === 'MPhil') {
+                const credit = parseInt(entryDiv.find('.mphil-credit').val()) || 0;
+                const points = credit * 3 * studentCount;
+                entryDiv.find('.adjustment-points').val(points);
+            } else {
+                const rules = adjustmentType.rules[studentType];
+                const credits = Math.floor(studentCount / rules.studentsPerCredit);
+                const points = credits * adjustmentType.points;
+                entryDiv.find('.adjustment-points').val(points);
+            }
+        } else if (adjustmentType.requiresValue) {
+            const value = parseInt(entryDiv.find('.adjustment-value').val()) || 0;
+            if (adjustmentType.maxValue && value > adjustmentType.maxValue) {
+                entryDiv.find('.adjustment-value').val(adjustmentType.maxValue);
+                value = adjustmentType.maxValue;
+            }
+            const points = value * adjustmentType.points;
+            entryDiv.find('.adjustment-points').val(points);
+        }
+    }
+
+
+    // Shared dashboard logic for both dean and chair
+    function createDashboardCard(email, data, role) {
+        console.log('Creating dashboard card for:', email, 'role:', role);
+        const name = getUserName(email);
+        let status = 'Pending';
+        let totalPoints = 0;
+        
+        if (role === 'Dean') {
+            if ((data.start && data.start.some(e => e.status === 'Approved')) || 
+                (data.end && data.end.some(e => e.status === 'Approved'))) {
+                status = 'Approved';
+            }
+            if (data.start && Array.isArray(data.start)) {
+                data.start.forEach(entry => totalPoints += entry.totalPoints || 0);
+            }
+            if (data.end && Array.isArray(data.end)) {
+                data.end.forEach(entry => totalPoints += entry.totalPoints || 0);
+            }
+        } else {
+            status = data.status || 'Pending';
+            totalPoints = data.totalPoints || 0;
+        }
+        
+        const comment = data.deanComment || '';
+        const additionalComment = data.additionalComment || '';
+        const commentLabel = role === 'Dean' ? "Dean's Comment/Recommendation" : "Chair's Comment/Recommendation";
+        
+        return `
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">${name}</h5>
+                        <span class="badge bg-${getStatusColor(status)}">${status}</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Total Points:</strong> ${totalPoints}</p>
+                        <div class="mb-3">
+                            <label class="form-label">${commentLabel}</label>
+                            <textarea class="form-control" rows="2" onchange="updateComment('${email}', this.value, '${role}')">${comment}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Additional Comments</label>
+                            <textarea class="form-control" rows="2" onchange="updateAdditionalComment('${email}', this.value, '${role}')">${additionalComment}</textarea>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-primary" onclick="viewUserDetails('${email}', '${role}')">
+                                View Details
+                            </button>
+                            <div>
+                                <button class="btn btn-success" onclick="acceptSubmission('${email}', '${role}')" ${status === 'Approved' ? 'disabled' : ''}>
+                                    Approve
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectSubmission('${email}', '${role}')" ${status === 'Rejected' ? 'disabled' : ''}>
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    function getStatusColor(status) {
+        switch(status.toLowerCase()) {
+            case 'approved': return 'success';
+            case 'pending': return 'warning';
+            case 'rejected': return 'danger';
+            default: return 'secondary';
+        }
+    }
+    function getUserName(email) {
+        return email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    function updateComment(email, comment, role) {
+        google.script.run
+            .withSuccessHandler(() => {
+                // Refresh the card
+                if (role === 'Dean') {
+                    google.script.run
+                        .withSuccessHandler(data => {
+                            const card = createDashboardCard(email, data, role);
+                            $(`#chairCards .card:contains('${getUserName(email)}')`).replaceWith(card);
+                        })
+                        .getChairWorkloadData(email);
+                } else {
+                    google.script.run
+                        .withSuccessHandler(data => {
+                            const card = createDashboardCard(email, data, role);
+                            $(`#facultyCards .card:contains('${getUserName(email)}')`).replaceWith(card);
+                        })
+                        .getFacultyWorkloadData(email);
+                }
+            })
+            .updateFacultyComment(email, comment);
+    }
+    function updateAdditionalComment(email, comment, role) {
+        google.script.run
+            .withSuccessHandler(() => {
+                // Refresh the card
+                if (role === 'Dean') {
+                    google.script.run
+                        .withSuccessHandler(data => {
+                            const card = createDashboardCard(email, data, role);
+                            $(`#chairCards .card:contains('${getUserName(email)}')`).replaceWith(card);
+                        })
+                        .getChairWorkloadData(email);
+                } else {
+                    google.script.run
+                        .withSuccessHandler(data => {
+                            const card = createDashboardCard(email, data, role);
+                            $(`#facultyCards .card:contains('${getUserName(email)}')`).replaceWith(card);
+                        })
+                        .getFacultyWorkloadData(email);
+                }
+            })
+            .updateFacultyAdditionalComment(email, comment);
+    }
+    function acceptSubmission(email, role) {
+        if (role === 'Dean') {
+            google.script.run
+                .withSuccessHandler(() => {
+                    alert('Submission accepted.');
+                    handleChairData(window.chairsUnderUser);
+                })
+                .approveChairSubmission(email);
+        } else {
+            google.script.run
+                .withSuccessHandler(() => {
+                    alert('Submission accepted.');
+                    handleFacultyData(window.facultyUnderUser);
+                })
+                .approveFacultySubmission(email);
+        }
+    }
+    function rejectSubmission(email, role) {
+        if (!confirm('Are you sure you want to reject and delete this submission?')) return;
+        if (role === 'Dean') {
+            google.script.run
+                .withSuccessHandler(() => {
+                    alert('Submission rejected and deleted.');
+                    handleChairData(window.chairsUnderUser);
+                })
+                .rejectChairSubmission(email);
+        } else {
+            google.script.run
+                .withSuccessHandler(() => {
+                    alert('Submission rejected and deleted.');
+                    handleFacultyData(window.facultyUnderUser);
+                })
+                .rejectFacultySubmission(email);
+        }
+    }
+    function viewUserDetails(email, role) {
+        // Fetch the correct data and show in modal
+        if (role === 'Dean') {
+            google.script.run.withSuccessHandler(data => {
+                showUserDetailsModal(email, data, role);
+            }).getChairWorkloadData(email);
+        } else {
+            google.script.run.withSuccessHandler(data => {
+                showUserDetailsModal(email, data, role);
+            }).getFacultyWorkloadData(email);
+        }
+    }
+
+    // Implement showUserDetailsModal to display the user's submission details in a modal
+    function showUserDetailsModal(email, data, role) {
+        let html = `<div class="submission-details">`;
+        if (data) {
+            // Show start and end periods if available
+            ['start', 'end'].forEach(period => {
+                if (data[period] && Array.isArray(data[period])) {
+                    html += `<h5 class="mt-3">${period === 'start' ? 'Beginning of Semester' : 'End of Year'}</h5>`;
+                    data[period].forEach((entry, idx) => {
+                        html += `
+                            <div class="card mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Entry ${idx + 1}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Category:</strong> ${entry.category}</p>
+                                            <p><strong>Subcategory:</strong> ${entry.subcategory}</p>
+                                            <p><strong>Activity:</strong> ${entry.activity}</p>
+                                            ${entry.courseCode ? `<p><strong>Course Code:</strong> ${entry.courseCode}</p>` : ''}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Base Points:</strong> ${entry.basePoints}</p>
+                                            <p><strong>Adjustment Points:</strong> ${entry.adjustmentPoints}</p>
+                                            <p><strong>Total Points:</strong> ${entry.totalPoints}</p>
+                                            ${entry.seiScore ? `<p><strong>SEI Score:</strong> ${entry.seiScore}</p>` : ''}
+                                            ${entry.studentCount ? `<p><strong>Student Count:</strong> ${entry.studentCount}</p>` : ''}
+                                        </div>
+                                    </div>
+                                    ${entry.description ? `<p><strong>Description:</strong> ${entry.description}</p>` : ''}
+                                    ${entry.adjustments && entry.adjustments.length > 0 ? `
+                                        <div class="mt-3">
+                                            <h6>Adjustments:</h6>
+                                            <ul>
+                                                ${entry.adjustments.map(adj => `
+                                                    <li>${adj.type}: ${adj.points} points
+                                                        ${adj.details ? ` (${Object.entries(adj.details).map(([k,v]) => `${k}: ${v}`).join(', ')})` : ''}
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>`;
+                    });
+                }
+            });
+        } else {
+            html += '<div class="alert alert-info">No data found for this user.</div>';
+        }
+        html += '</div>';
+        $('#detailsModal .modal-body').html(html);
+        var modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+    }
+
+    // Refactor recalculateAllEntries to apply adjustment points from the adjustments section to the first entry only
+    function recalculateAllEntries() {
+        let runningTotal = 0;
+        let adjustmentPoints = 0;
+        let totalContactHours = 0;
+
+        // Calculate contact hours from all entries
+        $('.workload-entry').each(function() {
+            const creditHours = parseInt($(this).find('.credit-hours').val()) || 0;
+            // 50 minutes per credit hour, 15 weeks
+            const contactHours = (creditHours * 50 * 15) / 60; // Convert minutes to hours
+            totalContactHours += contactHours;
+        });
+
+        // Update contact and preparation hours
+        $('#contactHours').val(totalContactHours.toFixed(1));
+        const prepHours = totalContactHours * 1.5;
+        $('#coursePrepHours').val(prepHours.toFixed(1));
+
+        // Calculate total adjustment points from the adjustments section
+        $('.adjustment-entry').each(function() {
+            const points = parseInt($(this).find('.adjustment-points').val()) || 0;
+            adjustmentPoints += points;
+        });
+
+        // Continue with existing points calculation
+        $('.workload-entry').each(function(index) {
+            const entryDiv = $(this);
+            const category = entryDiv.find('.category').val();
+            const subcategory = entryDiv.find('.subcategory').val();
+            const activity = entryDiv.find('.activity').val();
+            let baseTotal = 0;
+
+            // Calculate base points for this entry
+            if (category === 'Teaching') {
+                if (subcategory === 'Class') {
+                    const quantity = parseInt(entryDiv.find('.quantity').val()) || 1;
+                    const creditHours = parseInt(entryDiv.find('.credit-hours').val()) || 0;
+                    switch(activity) {
+                        case 'Undergraduate':
+                            baseTotal = creditHours * 3 * quantity;
+                            
+                            break;
+                        case 'Graduate':
+                            baseTotal = creditHours * 4 * quantity
+                            break;
+                        case 'Repeated':
+                            baseTotal = creditHours * 1.5 * quantity;
+                            break;
+                    }
+                } else if (subcategory === 'Clinical Practicum') {
+                    const weeks = parseInt(entryDiv.find('.practicum-weeks').val()) || 0;
+                    baseTotal = weeks * 3;
+                } else if (subcategory === 'Internship') {
+                    const faculty = entryDiv.find('.faculty-select').val();
+                    const internCount = parseInt(entryDiv.find('.intern-count').val()) || 0;
+                    
+                    switch(faculty) {
+                        case 'FEA':
+                            const programLevel = entryDiv.find('.program-level').val();
+                            if (programLevel === 'associate' || programLevel === 'certificate') {
+                                baseTotal = Math.floor(internCount / 2) * 9;
+                            } else if (programLevel === 'bachelor' || programLevel === 'diploma') {
+                                baseTotal = Math.floor(internCount / 3) * 9;
+                            }
+                            break;
+                            
+                        case 'FST':
+                            baseTotal = Math.floor(internCount / 10) * 9 * quantity;
+                            break;
+                            
+                        case 'FMSS':
+                            const course = entryDiv.find('.course-select').val();
+                            console.log(course);
+                            if (course === 'TOUR2995') {
+                                baseTotal = Math.floor(internCount / 15) * 9 * quantity;
+                            } else if (course === 'BBUA4995' || course === 'MGMT4995') {
+                                baseTotal = Math.floor(internCount / 10) * 9 * quantity;
+                            }
+                            break;
+                            
+                        case 'FHS':
+                            const fhsCourse = entryDiv.find('.fhscourse-select').val();
+                            console.log(fhsCourse);
+                            if (fhsCourse === 'BPHA' || fhsCourse === 'BMS') {
+                                baseTotal = Math.floor(internCount / 10) * 9 * quantity;   
+                            } else if (fhsCourse === 'SW2991' || fhsCourse === 'SW3991') {
+                                baseTotal = Math.floor(internCount / 13) * 9 * quantity;
+                            }
+                            break;
+                    }
+                } else if (subcategory === 'Field Work') {
+                    // const inclassHours = parseInt(entryDiv.find('.inclass-hours').val()) || 0;
+                    // const fieldHours = parseInt(entryDiv.find('.field-hours').val()) || 0;
+                    baseTotal = (2.5*3) * 3 * quantity;
+                }
+            } else if (category && categoryOptions[category] && subcategory && categoryOptions[category][subcategory]) {
+                const activityPoints = categoryOptions[category][subcategory][activity] || 0;
+                const quantity = parseInt(entryDiv.find('.quantity').val()) || 1;
+                baseTotal = activityPoints * quantity;
+            }
+
+            // Stacked base points: running total from previous entries + this entry's base
+            const stackedBase = runningTotal + baseTotal;
+            entryDiv.find('.base-points').val(stackedBase);
+
+            // Calculate per-entry adjustments (SEI, class size)
+            let perEntryAdjustment = 0;
+            const seiScore = parseFloat(entryDiv.find('.sei-score').val()) || 0;
+            if (seiScore) {
+                if (seiScore >= 4.5) perEntryAdjustment += 1;
+                else if (seiScore >= 4) perEntryAdjustment += 0.5;
+            }
+            const classSize = parseInt(entryDiv.find('.student-count').val()) || 0;
+            if (classSize >= 50) perEntryAdjustment += 2;
+
+            // Only show adjustment if there is a manual or per-entry adjustment
+            let totalAdjustment = perEntryAdjustment;
+            // Apply adjustment points from the adjustments section to the first entry only
+            if (index === 0) {
+                totalAdjustment += adjustmentPoints;
+            }
+            if (totalAdjustment > 0) {
+                entryDiv.find('.adjustment-points').val(totalAdjustment);
+            } else {
+                entryDiv.find('.adjustment-points').val('');
+            }
+            entryDiv.find('.total-points').val(stackedBase + totalAdjustment);
+
+            // Update running total for next entry
+            runningTotal = stackedBase + totalAdjustment;
+        });
+    }
+
+    // Update all relevant input fields to trigger recalculateAllEntries
+    $(document).on('input change', '.workload-entry input, .workload-entry select, .adjustment-entry input, .adjustment-entry select', function() {
+        recalculateAllEntries();
+    });
+
+    function saveDraft() {
+        const draftData = {
+            userEmail: userEmail,
+            timestamp: new Date().toISOString(),
+            formData: {
+                personName: $('#personName').val(),
+                faculty: $('#faculty').val(),
+                yearsWorking: $('#yearsWorking').val(),
+                facultyCategory: $('#facultyCategory').val(),
+                facultyType: $('#facultyType').val(),
+                semester: $('#semesterSelect').val(),
+                submissionType: $('#submissionType').val(),
+            },
+            entries: [],
+            adjustments: []
+        };
+
+        $('.workload-entry').each(function() {
+            const entry = $(this);
+            draftData.entries.push({
+                category: entry.find('.category').val(),
+                subcategory: entry.find('.subcategory').val(),
+                activity: entry.find('.activity').val(),
+                courseCode: entry.find('.course-code').val(),
+                seiScore: entry.find('.sei-score').val(),
+                studentCount: entry.find('.student-count').val(),
+                creditHours: entry.find('.credit-hours').val(),
+                practicumType: entry.find('.practicum-type').val(),
+                practicumStudents: entry.find('.practicum-students').val(),
+                practicumWeeks: entry.find('.practicum-weeks').val(),
+                facultySelect: entry.find('.faculty-select').val(),
+                internCount: entry.find('.intern-count').val(),
+                programLevel: entry.find('.program-level').val(),
+                courseSelect: entry.find('.course-select').val(),
+                fhscourseSelect: entry.find('.fhscourse-select').val(),
+                quantity: entry.find('.quantity').val(),
+                description: entry.find('.description').val(),
+            });
+        });
+
+        $('.adjustment-entry').each(function() {
+            const entry = $(this);
+            draftData.adjustments.push({
+                type: entry.find('.adjustment-type').val(),
+                value: entry.find('.adjustment-value').val(),
+                thesisStudentType: entry.find('.thesis-student-type').val(),
+                thesisStudentCount: entry.find('.thesis-student-count').val(),
+                mphilCredit: entry.find('.mphil-credit').val(),
+            });
+        });
+
+        const draftKey = `draft_${userEmail}_${Date.now()}`;
+        localStorage.setItem(draftKey, JSON.stringify(draftData));
+        alert('Draft saved successfully!');
+        showDashboard(userRecords);
+    }
+
+    function loadDrafts() {
+        const draftsContainer = $('#savedDrafts');
+        draftsContainer.empty();
+        let hasDrafts = false;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith(`draft_${userEmail}`)) {
+                hasDrafts = true;
+                const draft = JSON.parse(localStorage.getItem(key));
+                const draftCard = `
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Draft - ${new Date(draft.timestamp).toLocaleString()}</h5>
+                                <p class="card-text">
+                                    <strong>Semester:</strong> ${draft.formData.semester || 'Not set'}<br>
+                                    <strong>Type:</strong> ${draft.formData.submissionType || 'Not set'}
+                                </p>
+                                <button class="btn btn-primary btn-sm" onclick="loadDraftIntoForm('${key}')">Load</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteDraft('${key}')">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                draftsContainer.append(draftCard);
+            }
+        }
+        if (!hasDrafts) {
+            draftsContainer.html('<div class="col-12"><div class="alert alert-secondary">No saved drafts found.</div></div>');
+        }
+    }
+
+    function deleteDraft(key) {
+        if (confirm('Are you sure you want to delete this draft?')) {
+            localStorage.removeItem(key);
+            loadDrafts();
+        }
+    }
+
+    function loadDraftIntoForm(key) {
+        const draft = JSON.parse(localStorage.getItem(key));
+        if (!draft) {
+            alert('Draft not found!');
+            return;
+        }
+
+        showSubmissionForm();
+
+        // Use a timeout to ensure the form is visible and populated before we fill it
+        setTimeout(() => {
+            // Fill main form data
+            $('#personName').val(draft.formData.personName);
+            $('#faculty').val(draft.formData.faculty);
+            $('#yearsWorking').val(draft.formData.yearsWorking);
+            $('#facultyCategory').val(draft.formData.facultyCategory).trigger('change');
+            $('#facultyType').val(draft.formData.facultyType);
+            $('#semesterSelect').val(draft.formData.semester);
+            $('#submissionType').val(draft.formData.submissionType);
+
+            // Clear existing entries and adjustments
+            $('#workloadEntries').empty();
+            $('#adjustmentEntries').empty();
+
+            // Load workload entries
+            draft.entries.forEach(entryData => {
+                addWorkloadEntry();
+                const entryDiv = $('.workload-entry').last();
+                entryDiv.find('.category').val(entryData.category).trigger('change');
+                // Need another timeout for sub-elements to populate
+                setTimeout(() => {
+                    entryDiv.find('.subcategory').val(entryData.subcategory).trigger('change');
+                    setTimeout(() => {
+                        entryDiv.find('.activity').val(entryData.activity).trigger('change');
+                        entryDiv.find('.course-code').val(entryData.courseCode);
+                        entryDiv.find('.sei-score').val(entryData.seiScore);
+                        entryDiv.find('.student-count').val(entryData.studentCount);
+                        entryDiv.find('.credit-hours').val(entryData.creditHours);
+                        entryDiv.find('.practicum-type').val(entryData.practicumType);
+                        entryDiv.find('.practicum-students').val(entryData.practicumStudents);
+                        entryDiv.find('.practicum-weeks').val(entryData.practicumWeeks);
+                        entryDiv.find('.faculty-select').val(entryData.facultySelect).trigger('change');
+                        entryDiv.find('.intern-count').val(entryData.internCount);
+                        entryDiv.find('.program-level').val(entryData.programLevel);
+                        entryDiv.find('.course-select').val(entryData.courseSelect);
+                        entryDiv.find('.fhscourse-select').val(entryData.fhscourseSelect);
+                        entryDiv.find('.quantity').val(entryData.quantity);
+                        entryDiv.find('.description').val(entryData.description);
+                    }, 200);
+                }, 200);
+            });
+
+            // Load adjustments
+            draft.adjustments.forEach(adjData => {
+                addAdjustmentEntry();
+                const adjDiv = $('.adjustment-entry').last();
+                adjDiv.find('.adjustment-type').val(adjData.type).trigger('change');
+                setTimeout(() => {
+                    adjDiv.find('.adjustment-value').val(adjData.value);
+                    adjDiv.find('.thesis-student-type').val(adjData.thesisStudentType).trigger('change');
+                    adjDiv.find('.thesis-student-count').val(adjData.thesisStudentCount);
+                    adjDiv.find('.mphil-credit').val(adjData.mphilCredit);
+                }, 200);
+            });
+
+            // Recalculate everything after a final delay
+            setTimeout(() => {
+                recalculateAllEntries();
+                // After loading, we should probably remove the draft
+                // Or ask the user if they want to remove it after submitting
+                localStorage.removeItem(key); 
+                alert('Draft loaded. It has been removed from your saved drafts.');
+                loadDrafts();
+            }, 1000);
+
+        }, 100);
+    }
+
+    function createFacultySemesterCard(email, record) {
+        // Compose a card for each period (start/end) in a Bootstrap card style
+        let cardsHtml = '';
+        if (record.start && Array.isArray(record.start)) {
+            const totalPoints = record.start.length > 0 ? record.start[record.start.length - 1].totalPoints || 0 : 0;
+            const status = record.start[0]?.status || 'Pending';
+            cardsHtml += `
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">${record.semester} - Beginning of Semester</h5>
+                            <p class="card-text">
+                                <strong>Status:</strong> ${status}<br>
+                                <strong>Total Points:</strong> ${totalPoints}
+                            </p>
+                            <div class="btn-group">
+                                <button class="btn btn-info btn-sm" onclick="viewDetails('${record.id}','start')">View Details</button>
+                                <button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Export</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="exportSubmission('${email}', '${record.semester}', 'start', 'excel')">Excel</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportSubmission('${email}', '${record.semester}', 'start', 'tsv')">Tab-separated</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportSubmission('${email}', '${record.semester}', 'start', 'pdf')">PDF</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        if (record.end && Array.isArray(record.end)) {
+            const totalPoints = record.end.length > 0 ? record.end[record.end.length - 1].totalPoints || 0 : 0;
+            const status = record.end[0]?.status || 'Pending';
+            cardsHtml += `
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">${record.semester} - End of Year</h5>
+                            <p class="card-text">
+                                <strong>Status:</strong> ${status}<br>
+                                <strong>Total Points:</strong> ${totalPoints}
+                            </p>
+                            <div class="btn-group">
+                                <button class="btn btn-info btn-sm" onclick="viewDetails('${record.id}','end')">View Details</button>
+                                <button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Export</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="exportSubmission('${email}', '${record.semester}', 'end', 'excel')">Excel</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportSubmission('${email}', '${record.semester}', 'end', 'tsv')">Tab-separated</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="exportSubmission('${email}', '${record.semester}', 'end', 'pdf')">PDF</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        if (!cardsHtml) {
+            cardsHtml = '<div class="col-12"><div class="alert alert-warning mb-0">No data for this semester.</div></div>';
+        }
+        return cardsHtml;
+    }
+
+    function viewFacultySemesterDetails(email, semester, period) {
+        // Fetch all records for the faculty, find the correct semester, and show details for the selected period
+        google.script.run.withSuccessHandler(records => {
+            let html = `<div class=\"submission-details\">`;
+            let found = false;
+            let currentComment = '';
+            let currentRecommendation = '';
+            let currentStatus = '';
+            if (Array.isArray(records)) {
+                const record = records.find(r => r.semester === semester);
+                if (record && record[period] && Array.isArray(record[period])) {
+                    found = true;
+                    // Get existing comments/recommendations/status if present
+                    if (record.comments && record.comments[semester] && record.comments[semester][period]) {
+                        currentComment = record.comments[semester][period].comment || '';
+                        currentRecommendation = record.comments[semester][period].recommendation || '';
+                        currentStatus = record.comments[semester][period].status || '';
+                    } else if (record[period][0]?.status) {
+                        currentStatus = record[period][0].status;
+                    }
+                    html += `<h5 class=\"mt-3\">${period === 'start' ? 'Beginning of Semester' : 'End of Year'} (${semester})</h5>`;
+                    record[period].forEach((entry, idx) => {
+                        html += `
+                            <div class=\"card mb-3\">
+                                <div class=\"card-header d-flex justify-content-between align-items-center\">
+                                    <h6 class=\"mb-0\">Entry ${idx + 1}</h6>
+                                </div>
+                                <div class=\"card-body\">
+                                    <div class=\"row\">
+                                        <div class=\"col-md-6\">
+                                            <p><strong>Category:</strong> ${entry.category}</p>
+                                            <p><strong>Subcategory:</strong> ${entry.subcategory}</p>
+                                            <p><strong>Activity:</strong> ${entry.activity}</p>
+                                            ${entry.courseCode ? `<p><strong>Course Code:</strong> ${entry.courseCode}</p>` : ''}
+                                        </div>
+                                        <div class=\"col-md-6\">
+                                            <p><strong>Base Points:</strong> ${entry.basePoints}</p>
+                                            <p><strong>Adjustment Points:</strong> ${entry.adjustmentPoints}</p>
+                                            <p><strong>Total Points:</strong> ${entry.totalPoints}</p>
+                                            ${entry.seiScore ? `<p><strong>SEI Score:</strong> ${entry.seiScore}</p>` : ''}
+                                            ${entry.studentCount ? `<p><strong>Student Count:</strong> ${entry.studentCount}</p>` : ''}
+                                        </div>
+                                    </div>
+                                    ${entry.description ? `<p><strong>Description:</strong> ${entry.description}</p>` : ''}
+                                    ${entry.adjustments && entry.adjustments.length > 0 ? `
+                                        <div class=\"mt-3\">
+                                            <h6>Adjustments:</h6>
+                                            <ul>
+                                                ${entry.adjustments.map(adj => `
+                                                    <li>${adj.type}: ${adj.points} points
+                                                        ${adj.details ? ` (${Object.entries(adj.details).map(([k,v]) => `${k}: ${v}`).join(', ')})` : ''}
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>`;
+                    });
+                    // Comments dropdown and recommendations textarea
+                    html += `
+                        <div class=\"mb-3\">
+                            <label class=\"form-label\"><strong>Comments</strong></label>
+                            <select id=\"modalCommentSelect\" class=\"form-select\">
+                                <option value=\"\">Select a comment</option>
+                                <option value=\"meets\" ${currentComment === 'meets' ? 'selected' : ''}>This workload meets the required expectations</option>
+                                <option value=\"not_meet\" ${currentComment === 'not_meet' ? 'selected' : ''}>This workload does not meet the required expectations</option>
+                            </select>
+                        </div>
+                        <div class=\"mb-3\">
+                            <label class=\"form-label\"><strong>Recommendations</strong></label>
+                            <textarea id=\"modalRecommendationTextarea\" class=\"form-control\" rows=\"3\">${currentRecommendation}</textarea>
+                        </div>
+                        <div class=\"d-flex justify-content-end gap-2\">
+                            <button class=\"btn btn-success\" id=\"modalReviewedBtn\" ${currentStatus === 'reviewed' ? 'disabled' : ''}>Reviewed</button>
+                        </div>
+                    `;
+                }
+            }
+            if (!found) {
+                html += '<div class=\"alert alert-info\">No data found for this period.</div>';
+            }
+            html += '</div>';
+            $('#detailsModal .modal-body').html(html);
+            var modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+
+            // Add event listener for reviewed
+            setTimeout(function() {
+                $('#modalReviewedBtn').off('click').on('click', function() {
+                    saveChairCommentRecommendation(email, semester, period, 'reviewed');
+                });
+            }, 300);
+        }).getFacultyWorkloadData(email);
+    }
+
+    function saveChairCommentRecommendation(email, semester, period, status) {
+        const commentValue = $('#modalCommentSelect').val();
+        let commentText = '';
+        if (commentValue === 'meets') commentText = 'This workload meets the required expectations';
+        else if (commentValue === 'not_meet') commentText = 'This workload does not meet the required expectations';
+        const recommendation = $('#modalRecommendationTextarea').val();
+        // Require both fields
+        if (!commentText) {
+            alert('Please select a comment.');
+            return;
+        }
+        if (!recommendation || recommendation.trim().length === 0) {
+            alert('Please enter a recommendation.');
+            return;
+        }
+        google.script.run.withSuccessHandler(response => {
+            if (response.success) {
+                alert('Saved successfully!');
+                $('.modal').modal('hide');
+                // Optionally, refresh the dashboard
+                fetchUserRecords && fetchUserRecords();
+            } else {
+                alert('Error saving: ' + (response.message || 'Unknown error'));
+            }
+        }).withFailureHandler(error => {
+            alert('Error saving: ' + (error.message || 'Unknown error'));
+        }).saveChairCommentRecommendation(email, semester, period, commentText, recommendation, status);
+    }
+
+    // 3. Update faculty UI: show table of submissions from their department
+    function renderFacultyDepartmentTable() {
+        // Check if user is a chair and hide the table if so
+        google.script.run.withSuccessHandler(role => {
+            if (role === 'Chair') {
+                $('#workloadSubmissionsTableSection').empty();
+                return;
+            }
+            let tableHtml = `
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h3>Workload Submissions in Your Department</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="facultyDeptSubmissionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Faculty Name</th>
+                                        <th>Semester</th>
+                                        <th>Teaching Points</th>
+                                        <th>Research Points</th>
+                                        <th>Service Points</th>
+                                        <th>Professional Dev Points</th>
+                                        <th>Base Total</th>
+                                        <th>Adjustments</th>
+                                        <th>Total Points</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#workloadSubmissionsTableSection').html(tableHtml);
+            // Fetch and display all submissions for this faculty's department
+            google.script.run.withSuccessHandler(submissions => {
+                const table = $('#facultyDeptSubmissionsTable tbody');
+                table.empty();
+                if (!submissions || submissions.length === 0) {
+                    table.append('<tr><td colspan="10" class="text-center">No submissions found</td></tr>');
+                    return;
+                }
+                submissions.forEach(sub => {
+                    // Use the latest period (start or end) for status and points
+                    let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
+                    let entries = sub[period] && Array.isArray(sub[period]) ? sub[period] : [];
+                    if (!entries.length) return;
+                    // Sum points by category
+                    let teaching = 0, research = 0, service = 0, professional = 0, baseTotal = 0, adjustments = 0, total = 0, status = entries[0].status || 'Pending';
+                    for (let i = entries.length - 1; i >= 0; i--) {
+                        if (teaching === 0 && entries[i].category === 'Teaching') teaching = entries[i].totalPoints || 0;
+                        if (research === 0 && entries[i].category === 'Research') research = entries[i].totalPoints || 0;
+                        if (service === 0 && entries[i].category === 'Service') service = entries[i].totalPoints || 0;
+                        if (professional === 0 && entries[i].category === 'Professional Development') professional = entries[i].totalPoints || 0;
+                    }
+                    total = entries.length > 0 ? entries[entries.length - 1].totalPoints || 0 : 0;
+                    table.append(`
+                        <tr>
+                            <td>${getUserName(sub.email)}</td>
+                            <td>${sub.semester || ''}</td>
+                            <td>${teaching}</td>
+                            <td>${research}</td>
+                            <td>${service}</td>
+                            <td>${professional}</td>
+                            <td>${baseTotal}</td>
+                            <td>${adjustments}</td>
+                            <td>${total}</td>
+                            <td>${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                        </tr>
+                    `);
+                });
+            }).getSubmissionsForFacultyDepartment(userEmail);
+        }).getUserRole(userEmail);
+    }
+
+    // 4. Populate 'Workload Submission' table at the bottom of the form with department-filtered entries
+    $(document).ready(function() {
+        // ... existing ready code ...
+        // After form and dashboard are loaded, show the department table for faculty
+        if (typeof userEmail !== 'undefined' && userEmail) {
+            renderFacultyDepartmentTable();
+        }
+    });
+
+    // Add exportSubmission JS function (stub, to be implemented next)
+    function exportSubmission(email, semester, period, format) {
+        // Fetch the faculty's records and find the correct semester and period
+        google.script.run.withSuccessHandler(records => {
+            const record = Array.isArray(records) ? records.find(r => r.semester === semester) : null;
+            if (!record || !record[period] || !Array.isArray(record[period])) {
+                alert('No data found for this submission.');
+                return;
+            }
+            // Prepare data in the required structure
+            const entries = record[period];
+            // Group by category and activity
+            const grouped = {};
+            entries.forEach(entry => {
+                const cat = entry.category || 'Other';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(entry);
+            });
+            // Add Administration if not present
+            if (!grouped['Administration']) grouped['Administration'] = [];
+            // Prepare rows for export
+            const rows = [];
+            rows.push([
+                'Activity Category',
+                'Activity Description',
+                'Actual Workload Points',
+                'Comments/Evidence'
+            ]);
+            Object.keys(grouped).forEach(category => {
+                grouped[category].forEach(entry => {
+                    rows.push([
+                        category,
+                        entry.activity || entry.subcategory || '',
+                        entry.totalPoints || 0,
+                        entry.description || ''
+                    ]);
+                });
+            });
+            // Add empty rows for missing categories/activities if needed (optional)
+            // Export logic
+            if (format === 'excel') {
+                // SheetJS export
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Workload');
+                XLSX.writeFile(wb, `${email.replace(/@.*/, '')}_${semester}_${period}.xlsx`);
+            } else if (format === 'tsv') {
+                // Tab-separated export
+                const tsv = rows.map(row => row.join('\t')).join('\n');
+                const blob = new Blob([tsv], { type: 'text/tab-separated-values' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${email.replace(/@.*/, '')}_${semester}_${period}.tsv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else if (format === 'pdf') {
+                // jsPDF export
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFontSize(12);
+                doc.text('WORKLOAD ALLOCATION BREAKDOWN', 10, 10);
+                let y = 20;
+                // Table header
+                doc.setFont(undefined, 'bold');
+                doc.text('Activity Category', 10, y);
+                doc.text('Activity Description', 60, y);
+                doc.text('Actual Workload Points', 130, y);
+                doc.text('Comments/Evidence', 170, y);
+                doc.setFont(undefined, 'normal');
+                y += 8;
+                // Table rows
+                rows.slice(1).forEach(row => {
+                    doc.text(String(row[0]), 10, y);
+                    doc.text(String(row[1]), 60, y);
+                    doc.text(String(row[2]), 130, y);
+                    doc.text(String(row[3]), 170, y, { maxWidth: 30 });
+                    y += 8;
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                });
+                doc.save(`${email.replace(/@.*/, '')}_${semester}_${period}.pdf`);
+            }
+        }).getFacultyWorkloadData(email);
+    }
+
+
+    // Add fixed advising hours
+    function initializeAdvisingHours() {
+        const advisingHtml = `
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Academic Advising (90 hours)</label>
+                    <input type="text" class="form-control readonly-grey" value="6%" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Career Counseling (20 hours)</label>
+                    <input type="text" class="form-control readonly-grey" value="1%" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Mentoring for projects (20 hours)</label>
+                    <input type="text" class="form-control readonly-grey" value="1%" readonly>
+                </div>
+            </div>`;
+        $('#coursePrepHours').closest('.row').after(advisingHtml);
+    }
+
+    // Modify thesis advising
+    function addThesisAdvisingEntry() {
+        const entryHtml = `
+            <div class="thesis-advising-entry mb-3">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Student Count (Max 3)</label>
+                        <input type="number" class="form-control thesis-student-count" min="1" max="3" value="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Credit Hours (1-3)</label>
+                        <input type="number" class="form-control thesis-credits" min="1" max="3" value="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Points</label>
+                        <input type="text" class="form-control readonly-grey thesis-points" readonly>
+                    </div>
+                </div>
+            </div>`;
+        $('#thesisAdvisingEntries').append(entryHtml);
+        updateThesisPoints();
+    }
+
+    function updateThesisPoints() {
+        $('.thesis-advising-entry').each(function() {
+            const studentCount = parseInt($(this).find('.thesis-student-count').val()) || 0;
+            const credits = parseInt($(this).find('.thesis-credits').val()) || 0;
+            const points = studentCount * credits * 3; // 3 points per credit hour
+            $(this).find('.thesis-points').val(points);
+        });
+    }
+
+    // Add handler for faculty selection in internship fields
+    $(document).on('change', '.faculty-select', function() {
+        const entryDiv = $(this).closest('.workload-entry');
+        const faculty = $(this).val();
+        
+        // Hide all faculty-specific fields
+        entryDiv.find('.fea-fields, .fst-fields, .fmss-fields, .fhs-fields').hide();
+        
+        // Show relevant fields based on faculty selection
+        if (faculty === 'FEA') {
+            entryDiv.find('.fea-fields').show();
+        } else if (faculty === 'FST') {
+            entryDiv.find('.fst-fields').show();
+        } else if (faculty === 'FMSS') {
+            entryDiv.find('.fmss-fields').show();
+        } else if (faculty === 'FHS') {
+            entryDiv.find('.fhs-fields').show();
+        }
+        
+        updatePoints(this);
+    });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="container mt-4">
+    <h2 class="mb-3">Faculty Workload Submission</h2>
+    <div class="alert alert-primary shadow-sm mb-4" style="font-size:1.1rem; border-left: 6px solid var(--ub-purple); background: linear-gradient(90deg, #f3e6fa 0%, #f9f6fb 100%);">
+        <strong>Welcome!</strong> This system functions as the University of Belize's digital platform for the Academic workload model which incorporates a point-based system to provide a fair, transparent, and flexible framework for allocating academic workload. The model covers teaching, research, service, and professional development activities, recognizing the diverse roles and responsibilities of faculty members while balancing institutional needs with individual career development.
+    </div>
+
+    <div id="unauthorized" style="display: none;">
+        <div class="alert alert-danger">
+            <h4 class="alert-heading">Access Denied</h4>
+            <p>You are not authorized to access this page. Please contact the administrator if you believe this is an error.</p>
+        </div>
+    </div>
+
+    <!-- Dean Dashboard -->
+    <div id="deanDashboard" style="display: none;">
+        <!-- Content loaded by showDeanDashboard() -->
+    </div>
+
+    <!-- Chair Dashboard -->
+    <div id="chairDashboard" style="display: none;">
+        <!-- Content loaded by showChairDashboard() -->
+    </div>
+
+    <div id="dashboard" style="display:none;"></div>
+
+    <div id="submissionFormContainer" style="display:none;">
+        <form id="workloadForm" onsubmit="return submitForm()">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Your Email</label>
+                    <input type="email" class="form-control readonly-grey" id="emailField" readonly>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" class="form-control" id="personName" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Faculty</label>
+                    <select class="form-control" id="faculty" required>
+                        <option value="">Select Faculty</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Years at UB</label>
+                    <input type="number" class="form-control" id="yearsWorking" min="1" max="50" required 
+                           onchange="$('.workload-entry').each(function() { updatePoints($(this)); })">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Faculty Category</label>
+                    <select class="form-control" id="facultyCategory" required onchange="updateFacultyTypes()">
+                        <option value="">Select Category</option>
+                        <option value="Non Tenure">Non Tenure</option>
+                        <option value="Tenure">Tenure</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Faculty Type</label>
+                    <select class="form-control" id="facultyType" required>
+                        <option value="">Select Category First</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Contact Hours</label>
+                    <input type="number" class="form-control readonly-grey" id="contactHours" readonly>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Course Preparation Hours</label>
+                    <input type="number" class="form-control readonly-grey" id="coursePrepHours" readonly>
+                </div>
+                <!-- <div class="col-md-4">
+                    <label class="form-label">Advising Hours</label>
+                    <input type="number" class="form-control readonly-grey" id="advisingHours" readonly>
+                </div> -->
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Semester</label>
+                    <select class="form-control" id="semesterSelect" required onchange="handleSemesterOrTypeChange()">
+                        <option value="">Select Semester</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Submission Type</label>
+                    <select class="form-control" id="submissionType" required onchange="handleSemesterOrTypeChange()">
+                        <option value="">Select Submission Type</option>
+                        <option value="Beginning">Beginning of Semester</option>
+                        <option value="Ending">End of Year</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- New Advising Section -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Academic Advising (90 hours)</label>
+                    <input type="text" class="form-control readonly-grey" value="6%" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Career Counseling (20 hours)</label>
+                    <input type="text" class="form-control readonly-grey" value="1%" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Mentoring for projects (20 hours)</label>
+                    <input type="text" class="form-control readonly-grey" value="1%" readonly>
+                </div>
+            </div>
+
+            <div id="workloadEntries">
+                <!-- Workload entries will be added here -->
+            </div>
+
+            <!-- Adjustments Section Moved Below -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Adjustments</h5>
+                </div>
+                <div class="card-body">
+                    <div id="adjustmentEntries">
+                        <!-- Adjustment entries will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addAdjustmentEntry()">Add Adjustment</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary mb-3" onclick="addWorkloadEntry()">Add Another Entry</button>
+            <button type="button" class="btn btn-info mb-3 me-2" onclick="saveDraft()">Save and Submit Later</button>
+            <button type="submit" class="btn btn-primary mb-3">Submit for Chair Approval</button>
+            <!-- Add Back to Dashboard button at the end of the submission form -->
+            <div class="d-flex justify-content-end mb-3">
+                <button type="button" class="btn btn-secondary" id="backToDashboardBtn">Back to Dashboard</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal for details -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Submission Details</h5></div>
+        <div class="modal-body"></div>
+        <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+      </div></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
