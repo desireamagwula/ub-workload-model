@@ -1844,20 +1844,6 @@
             }
         }
 
-        // Add delete entry function to the server-side code
-        function deleteWorkloadSubmission(recordId, period) {
-            try {
-                // Delete the entire workload record for the semester
-                UrlFetchApp.fetch(`${BASE_URL}/workloads/${recordId}.json`, {
-                    method: 'DELETE'
-                });
-                return { success: true, message: 'Submission deleted successfully' };
-            } catch (error) {
-                console.error('Error in deleteWorkloadSubmission:', error);
-                return { success: false, message: error.message };
-            }
-        }
-
     // Add new adjustment types and their rules
     const adjustmentTypes = {
         'New Course Development': {

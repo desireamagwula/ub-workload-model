@@ -756,7 +756,8 @@ function isUserAuthorized(email) {
 }
 
 
-// Deletes the entire workload record for a given semester (recordId encodes email + semester)
+// Deletes workload entries for a given semester and period (start or end).
+// If both periods are empty after deletion, removes the entire record.
 function deleteWorkloadSubmission(recordId, period) {
   try {
     const response = UrlFetchApp.fetch(`${BASE_URL}/workloads/${recordId}.json`);
@@ -766,10 +767,38 @@ function deleteWorkloadSubmission(recordId, period) {
       return { success: false, message: 'Record not found' };
     }
 
+    // If a valid period is specified, only delete that period's entries
+    if (period === 'start' || period === 'end') {
+      if (!record[period] || !Array.isArray(record[period]) || record[period].length === 0) {
+        return { success: false, message: `No ${period} submission found to delete` };
+      }
+
+      delete record[period];
+
+      // If both periods are now missing/empty, delete the entire record
+      const hasStart = record.start && Array.isArray(record.start) && record.start.length > 0;
+      const hasEnd = record.end && Array.isArray(record.end) && record.end.length > 0;
+
+      if (!hasStart && !hasEnd) {
+        UrlFetchApp.fetch(`${BASE_URL}/workloads/${recordId}.json`, {
+          method: 'delete'
+        });
+      } else {
+        UrlFetchApp.fetch(`${BASE_URL}/workloads/${recordId}.json`, {
+          method: 'PUT',
+          contentType: 'application/json',
+          payload: JSON.stringify(record)
+        });
+      }
+
+      return { success: true, message: 'Submission period deleted successfully' };
+    }
+
+    // Fallback: if period is not provided or invalid, delete the entire record (legacy behavior)
     UrlFetchApp.fetch(`${BASE_URL}/workloads/${recordId}.json`, {
       method: 'delete'
     });
-    return { success: true, message: 'Submission deleted successfully' };
+    return { success: true, message: 'Entire submission deleted successfully' };
   } catch (error) {
     console.error('Error in deleteWorkloadSubmission:', error);
     return { success: false, message: error.message };
