@@ -862,6 +862,9 @@
 
         let userEmail = '';
         let userRecords = [];
+        let chairSubmissionsData = [];
+        let deanSubmissionsData = [];
+        let facultyDeptSubmissionsData = [];
 
         $(document).ready(function() {
             initializeApp();
@@ -994,17 +997,32 @@
             initializeReportSemesterSelect();
         }
 
-        function initializeReportSemesterSelect() {
-            const select = $('#reportSemesterSelect');
+        function initializeSemesterSelectOptions(selectElementId) {
+            const select = $(selectElementId);
             if (!select.length) return;
             const currentYear = new Date().getFullYear();
             select.empty();
-            select.append('<option value=\"\">All semesters</option>');
-            // Provide a reasonable range of semesters around the current year
+            select.append('<option value="">All semesters</option>');
             for (let year = currentYear - 2; year <= currentYear + 1; year++) {
-                select.append(`<option value=\"${year}-1\">${year} Semester 1</option>`);
-                select.append(`<option value=\"${year}-2\">${year} Semester 2</option>`);
+                select.append(`<option value="${year}-1">${year} Semester 1</option>`);
+                select.append(`<option value="${year}-2">${year} Semester 2</option>`);
             }
+        }
+
+        function initializeReportSemesterSelect() {
+            initializeSemesterSelectOptions('#reportSemesterSelect');
+        }
+
+        function initializeChairSubmissionsFilters() {
+            initializeSemesterSelectOptions('#chairSemesterFilter');
+        }
+
+        function initializeDeanSubmissionsFilters() {
+            initializeSemesterSelectOptions('#deanSemesterFilter');
+        }
+
+        function initializeDeptSemesterFilter() {
+            initializeSemesterSelectOptions('#deptSemesterFilter');
         }
 
         function downloadSubmissionReport(event) {
@@ -1133,6 +1151,18 @@
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <h3>Faculty Submissions</h3>
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-md-4">
+                                <label for="chairSemesterFilter" class="form-label">Semester</label>
+                                <select id="chairSemesterFilter" class="form-select" onchange="renderChairSubmissionsTableBody()">
+                                    <option value="">All semesters</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="chairNameSearch" class="form-label">Search by last name</label>
+                                <input id="chairNameSearch" type="text" class="form-control" placeholder="Enter last name" oninput="renderChairSubmissionsTableBody()">
+                            </div>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-striped" id="facultySubmissionsTable">
                                 <thead>
@@ -1153,6 +1183,8 @@
                 </div>
             `;
             $('#dashboard').append(facultySubmissionsHtml);
+            initializeChairSubmissionsFilters();
+            chairSubmissionsData = [];
             
             // Fetch and display all submissions for faculty under this chair
             console.log('Fetching faculty under chair:', userEmail);
@@ -1173,8 +1205,6 @@
                         google.script.run
                             .withSuccessHandler(data => {
                                 console.log('Received data for faculty:', facultyEmail, data);
-                                const table = $('#facultySubmissionsTable tbody');
-                                
                                 if (Array.isArray(data) && data.length > 0) {
                                     // For each submission record
                                     data.forEach(record => {
@@ -1187,33 +1217,20 @@
                                         let totalPoints = entries.length > 0 ? entries[entries.length - 1].totalPoints || 0 : 0;
                                         let status = entries[0].status || 'Pending';
                                         let submissionDate = entries[0].submissionDate ? new Date(entries[0].submissionDate).toLocaleDateString() : '';
-                                        
-                                        table.append(`
-                                            <tr>
-                                                <td>${getUserName(facultyEmail)}</td>
-                                                <td>${facultyEmail}</td>
-                                                <td>${record.semester || ''}</td>
-                                                <td>${submissionDate}</td>
-                                                <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
-                                                <td>${totalPoints}</td>
-                                                <td>
-                                                    <button class="btn btn-primary btn-sm" onclick="viewFacultySemesterDetails('${facultyEmail}', '${record.semester}', '${period}')">
-                                                        View Details
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `);
+                                        chairSubmissionsData.push({
+                                            name: getUserName(facultyEmail),
+                                            email: facultyEmail,
+                                            semester: record.semester || '',
+                                            submissionDate,
+                                            status,
+                                            totalPoints,
+                                            period
+                                        });
                                     });
                                 } else {
-                                    // If no submissions found for this faculty
-                                    table.append(`
-                                        <tr>
-                                            <td>${getUserName(facultyEmail)}</td>
-                                            <td>${facultyEmail}</td>
-                                            <td colspan="5" class="text-center">No submissions found</td>
-                                        </tr>
-                                    `);
+                                    // No submissions for this faculty - do not add rows
                                 }
+                                renderChairSubmissionsTableBody();
                             })
                             .withFailureHandler(error => {
                                 console.error('Error fetching faculty data:', error);
@@ -1253,6 +1270,18 @@
                             <h3>Faculty & Chair Submissions</h3>
                         </div>
                     </div>
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-md-4">
+                            <label for="deanSemesterFilter" class="form-label">Semester</label>
+                            <select id="deanSemesterFilter" class="form-select" onchange="renderDeanSubmissionsTableBody()">
+                                <option value="">All semesters</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="deanNameSearch" class="form-label">Search by last name</label>
+                            <input id="deanNameSearch" type="text" class="form-control" placeholder="Enter last name" oninput="renderDeanSubmissionsTableBody()">
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-striped" id="deanSubmissionsTable">
                             <thead>
@@ -1269,34 +1298,27 @@
                     </div>
                 `;
                 $('#dashboard').html(dashboardHtml);
+                initializeDeanSubmissionsFilters();
+                deanSubmissionsData = [];
                 // Fetch and display all submissions
                 google.script.run.withSuccessHandler(submissions => {
-                    const table = $('#deanSubmissionsTable tbody');
-                    table.empty();
-                    if (!submissions || submissions.length === 0) {
-                        table.append('<tr><td colspan="5" class="text-center">No submissions found</td></tr>');
-                        return;
-                    }
-                    submissions.forEach(sub => {
+                    deanSubmissionsData = Array.isArray(submissions) ? submissions.map(sub => {
                         let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
                         let entry = sub[period] && Array.isArray(sub[period]) ? sub[period][0] : null;
                         let status = entry ? (entry.status || 'Pending') : 'Pending';
                         let submissionDate = entry ? (entry.submissionDate ? new Date(entry.submissionDate).toLocaleDateString() : '') : '';
                         let role = sub.role || 'Faculty';
-                        table.append(`
-                            <tr>
-                                <td>${getUserName(sub.email)}</td>
-                                <td>${role}</td>
-                                <td>${submissionDate}</td>
-                                <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
-                                <td>
-                                    <button class="btn btn-primary btn-sm" onclick="viewDeanSubmissionDetails('${sub.email}','${sub.semester}','${period}')">
-                                        View Details
-                                    </button>
-                                </td>
-                            </tr>
-                        `);
-                    });
+                        return {
+                            name: getUserName(sub.email),
+                            email: sub.email,
+                            role,
+                            semester: sub.semester || '',
+                            submissionDate,
+                            status,
+                            period
+                        };
+                    }) : [];
+                    renderDeanSubmissionsTableBody();
                 }).getAllSubmissionsForDean(userEmail);
             } else {
                 // For other deans, show profile, submissions, and faculty/chair submissions
@@ -1309,6 +1331,18 @@
                         <div class="row mt-4">
                             <div class="col-md-12">
                                 <h3>Faculty & Chair Submissions</h3>
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-md-4">
+                                <label for="deanSemesterFilter" class="form-label">Semester</label>
+                                <select id="deanSemesterFilter" class="form-select" onchange="renderDeanSubmissionsTableBody()">
+                                    <option value="">All semesters</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="deanNameSearch" class="form-label">Search by last name</label>
+                                <input id="deanNameSearch" type="text" class="form-control" placeholder="Enter last name" oninput="renderDeanSubmissionsTableBody()">
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -1327,34 +1361,27 @@
                         </div>
                     `;
                     $('#dashboard').append(submissionsHtml);
+                    initializeDeanSubmissionsFilters();
+                    deanSubmissionsData = [];
                     // Fetch and display submissions for their faculty
                     google.script.run.withSuccessHandler(submissions => {
-                        const table = $('#deanSubmissionsTable tbody');
-                        table.empty();
-                        if (!submissions || submissions.length === 0) {
-                            table.append('<tr><td colspan="5" class="text-center">No submissions found</td></tr>');
-                            return;
-                        }
-                        submissions.forEach(sub => {
+                        deanSubmissionsData = Array.isArray(submissions) ? submissions.map(sub => {
                             let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
                             let entry = sub[period] && Array.isArray(sub[period]) ? sub[period][0] : null;
                             let status = entry ? (entry.status || 'Pending') : 'Pending';
                             let submissionDate = entry ? (entry.submissionDate ? new Date(entry.submissionDate).toLocaleDateString() : '') : '';
                             let role = sub.role || 'Faculty';
-                            table.append(`
-                                <tr>
-                                    <td>${getUserName(sub.email)}</td>
-                                    <td>${role}</td>
-                                    <td>${submissionDate}</td>
-                                    <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
-                                    <td>
-                                        <button class="btn btn-primary btn-sm" onclick="viewDeanSubmissionDetails('${sub.email}','${sub.semester}','${period}')">
-                                            View Details
-                                        </button>
-                                    </td>
-                                </tr>
-                            `);
-                        });
+                            return {
+                                name: getUserName(sub.email),
+                                email: sub.email,
+                                role,
+                                semester: sub.semester || '',
+                                submissionDate,
+                                status,
+                                period
+                            };
+                        }) : [];
+                        renderDeanSubmissionsTableBody();
                     }).getAllSubmissionsForDean(userEmail);
                 }).getUserWorkloadRecords(userEmail);
             }
@@ -2607,6 +2634,133 @@
             .getDraftById(id);
     }
 
+    function renderChairSubmissionsTableBody() {
+        const tbody = $('#facultySubmissionsTable tbody');
+        if (!tbody.length) return;
+        const semesterFilter = ($('#chairSemesterFilter').val() || '').trim();
+        const nameQuery = ($('#chairNameSearch').val() || '').trim().toLowerCase();
+        tbody.empty();
+
+        const rows = chairSubmissionsData.filter(row => {
+            if (semesterFilter && row.semester !== semesterFilter) return false;
+            if (nameQuery && !row.name.toLowerCase().includes(nameQuery)) return false;
+            return true;
+        });
+
+        if (!rows.length) {
+            tbody.append('<tr><td colspan="7" class="text-center">No submissions found</td></tr>');
+            return;
+        }
+
+        rows.forEach(row => {
+            const statusBadge = `<span class="badge bg-${getStatusColor(row.status)}">${row.status.charAt(0).toUpperCase() + row.status.slice(1)}</span>`;
+            tbody.append(`
+                <tr>
+                    <td>${row.name}</td>
+                    <td>${row.email}</td>
+                    <td>${row.semester}</td>
+                    <td>${row.submissionDate}</td>
+                    <td>${statusBadge}</td>
+                    <td>${row.totalPoints}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="viewFacultySemesterDetails('${row.email}', '${row.semester}', '${row.period}')">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function renderDeanSubmissionsTableBody() {
+        const tbody = $('#deanSubmissionsTable tbody');
+        if (!tbody.length) return;
+        const semesterFilter = ($('#deanSemesterFilter').val() || '').trim();
+        const nameQuery = ($('#deanNameSearch').val() || '').trim().toLowerCase();
+        tbody.empty();
+
+        const rows = deanSubmissionsData.filter(row => {
+            if (semesterFilter && row.semester !== semesterFilter) return false;
+            if (nameQuery && !row.name.toLowerCase().includes(nameQuery)) return false;
+            return true;
+        });
+
+        if (!rows.length) {
+            tbody.append('<tr><td colspan="5" class="text-center">No submissions found</td></tr>');
+            return;
+        }
+
+        rows.forEach(row => {
+            const statusBadge = `<span class="badge bg-${getStatusColor(row.status)}">${row.status.charAt(0).toUpperCase() + row.status.slice(1)}</span>`;
+            tbody.append(`
+                <tr>
+                    <td>${row.name}</td>
+                    <td>${row.role}</td>
+                    <td>${row.submissionDate}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="viewDeanSubmissionDetails('${row.email}','${row.semester}','${row.period}')">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function renderFacultyDeptSubmissionsTableBody() {
+        const tbody = $('#facultyDeptSubmissionsTable tbody');
+        if (!tbody.length) return;
+        const semesterFilter = ($('#deptSemesterFilter').val() || '').trim();
+        const nameQuery = ($('#deptNameSearch').val() || '').trim().toLowerCase();
+        tbody.empty();
+
+        if (!Array.isArray(facultyDeptSubmissionsData) || facultyDeptSubmissionsData.length === 0) {
+            tbody.append('<tr><td colspan="10" class="text-center">No submissions found</td></tr>');
+            return;
+        }
+
+        const filtered = facultyDeptSubmissionsData.filter(sub => {
+            if (semesterFilter && (sub.semester || '') !== semesterFilter) return false;
+            const name = (getUserName(sub.email) || '').toLowerCase();
+            if (nameQuery && !name.includes(nameQuery)) return false;
+            return true;
+        });
+
+        if (!filtered.length) {
+            tbody.append('<tr><td colspan="10" class="text-center">No submissions found</td></tr>');
+            return;
+        }
+
+        filtered.forEach(sub => {
+            let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
+            let entries = sub[period] && Array.isArray(sub[period]) ? sub[period] : [];
+            if (!entries.length) return;
+            let teaching = 0, research = 0, service = 0, professional = 0, baseTotal = 0, adjustments = 0, total = 0, status = entries[0].status || 'Pending';
+            for (let i = entries.length - 1; i >= 0; i--) {
+                if (teaching === 0 && entries[i].category === 'Teaching') teaching = entries[i].totalPoints || 0;
+                if (research === 0 && entries[i].category === 'Research') research = entries[i].totalPoints || 0;
+                if (service === 0 && entries[i].category === 'Service') service = entries[i].totalPoints || 0;
+                if (professional === 0 && entries[i].category === 'Professional Development') professional = entries[i].totalPoints || 0;
+            }
+            total = entries.length > 0 ? entries[entries.length - 1].totalPoints || 0 : 0;
+            tbody.append(`
+                <tr>
+                    <td>${getUserName(sub.email)}</td>
+                    <td>${sub.semester || ''}</td>
+                    <td>${teaching}</td>
+                    <td>${research}</td>
+                    <td>${service}</td>
+                    <td>${professional}</td>
+                    <td>${baseTotal}</td>
+                    <td>${adjustments}</td>
+                    <td>${total}</td>
+                    <td>${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                </tr>
+            `);
+        });
+    }
+
     function createFacultySemesterCard(email, record) {
         // Compose a card for each period (start/end) in a Bootstrap card style
         let cardsHtml = '';
@@ -2805,6 +2959,18 @@
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <h3>Workload Submissions in Your Department</h3>
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-md-4">
+                                <label for="deptSemesterFilter" class="form-label">Semester</label>
+                                <select id="deptSemesterFilter" class="form-select" onchange="renderFacultyDeptSubmissionsTableBody()">
+                                    <option value="">All semesters</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="deptNameSearch" class="form-label">Search by last name</label>
+                                <input id="deptNameSearch" type="text" class="form-control" placeholder="Enter last name" oninput="renderFacultyDeptSubmissionsTableBody()">
+                            </div>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-striped" id="facultyDeptSubmissionsTable">
                                 <thead>
@@ -2829,42 +2995,11 @@
             `;
             $('#workloadSubmissionsTableSection').html(tableHtml);
             // Fetch and display all submissions for this faculty's department
+            initializeDeptSemesterFilter();
+            facultyDeptSubmissionsData = [];
             google.script.run.withSuccessHandler(submissions => {
-                const table = $('#facultyDeptSubmissionsTable tbody');
-                table.empty();
-                if (!submissions || submissions.length === 0) {
-                    table.append('<tr><td colspan="10" class="text-center">No submissions found</td></tr>');
-                    return;
-                }
-                submissions.forEach(sub => {
-                    // Use the latest period (start or end) for status and points
-                    let period = sub.end && Array.isArray(sub.end) && sub.end.length > 0 ? 'end' : 'start';
-                    let entries = sub[period] && Array.isArray(sub[period]) ? sub[period] : [];
-                    if (!entries.length) return;
-                    // Sum points by category
-                    let teaching = 0, research = 0, service = 0, professional = 0, baseTotal = 0, adjustments = 0, total = 0, status = entries[0].status || 'Pending';
-                    for (let i = entries.length - 1; i >= 0; i--) {
-                        if (teaching === 0 && entries[i].category === 'Teaching') teaching = entries[i].totalPoints || 0;
-                        if (research === 0 && entries[i].category === 'Research') research = entries[i].totalPoints || 0;
-                        if (service === 0 && entries[i].category === 'Service') service = entries[i].totalPoints || 0;
-                        if (professional === 0 && entries[i].category === 'Professional Development') professional = entries[i].totalPoints || 0;
-                    }
-                    total = entries.length > 0 ? entries[entries.length - 1].totalPoints || 0 : 0;
-                    table.append(`
-                        <tr>
-                            <td>${getUserName(sub.email)}</td>
-                            <td>${sub.semester || ''}</td>
-                            <td>${teaching}</td>
-                            <td>${research}</td>
-                            <td>${service}</td>
-                            <td>${professional}</td>
-                            <td>${baseTotal}</td>
-                            <td>${adjustments}</td>
-                            <td>${total}</td>
-                            <td>${status.charAt(0).toUpperCase() + status.slice(1)}</td>
-                        </tr>
-                    `);
-                });
+                facultyDeptSubmissionsData = Array.isArray(submissions) ? submissions : [];
+                renderFacultyDeptSubmissionsTableBody();
             }).getSubmissionsForFacultyDepartment(userEmail);
         }).getUserRole(userEmail);
     }
