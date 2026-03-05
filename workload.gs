@@ -1170,10 +1170,12 @@ function isReportAuthorized(email) {
 }
 
 /**
- * Gets submission statistics by department and status
+ * Gets submission statistics by department and status.
+ * If a semester is provided, limits the report to that semester.
+ * @param {string} [semester] - Optional semester filter in the form 'YYYY-1' or 'YYYY-2'
  * @returns {Object} Report data with department breakdowns
  */
-function getSubmissionReport() {
+function getSubmissionReport(semester) {
   try {
     const userEmail = Session.getActiveUser().getEmail();
     if (!isReportAuthorized(userEmail)) {
@@ -1203,6 +1205,8 @@ function getSubmissionReport() {
     
     Object.entries(data).forEach(([recordId, record]) => {
       if (!record.email) return;
+      // Apply semester filter if provided
+      if (semester && record.semester !== semester) return;
       
       const email = record.email;
       
@@ -1302,17 +1306,19 @@ function getSubmissionReport() {
 }
 
 /**
- * Generates Excel-compatible CSV file for submission report
+ * Generates Excel-compatible CSV file for submission report.
+ * Optionally filters by semester.
+ * @param {string} [semester] - Optional semester filter in the form 'YYYY-1' or 'YYYY-2'
  * @returns {Object} File data with CSV content
  */
-function generateSubmissionReportExcel() {
+function generateSubmissionReportExcel(semester) {
   try {
     const userEmail = Session.getActiveUser().getEmail();
     if (!isReportAuthorized(userEmail)) {
       return { success: false, message: 'Unauthorized' };
     }
 
-    const reportResult = getSubmissionReport();
+    const reportResult = getSubmissionReport(semester);
     if (!reportResult.success) {
       return reportResult;
     }

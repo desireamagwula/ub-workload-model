@@ -970,21 +970,48 @@
                                 <h3>Reports</h3>
                             </div>
                             <div class="card-body">
-                                <p class="mb-3">Download submission reports as Excel files.</p>
-                                <button class="btn btn-primary" onclick="downloadSubmissionReport()">
-                                    <i class="bi bi-download"></i> Download Submission Report
-                                </button>
+                                <p class="mb-3">Download submission reports as Excel (CSV-compatible) files.</p>
+                                <div class="row g-2 align-items-end mb-2">
+                                    <div class="col-md-4">
+                                        <label for="reportSemesterSelect" class="form-label">Semester</label>
+                                        <select id="reportSemesterSelect" class="form-select">
+                                            <option value="">All semesters</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-primary w-100" onclick="downloadSubmissionReport(event)">
+                                            <i class="bi bi-download"></i> Download Submission Report
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Use the semester filter above to limit the report, or leave it as \"All semesters\".</small>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
             $('#dashboard').append(reportsHtml);
+            initializeReportSemesterSelect();
         }
 
-        function downloadSubmissionReport() {
+        function initializeReportSemesterSelect() {
+            const select = $('#reportSemesterSelect');
+            if (!select.length) return;
+            const currentYear = new Date().getFullYear();
+            select.empty();
+            select.append('<option value=\"\">All semesters</option>');
+            // Provide a reasonable range of semesters around the current year
+            for (let year = currentYear - 2; year <= currentYear + 1; year++) {
+                select.append(`<option value=\"${year}-1\">${year} Semester 1</option>`);
+                select.append(`<option value=\"${year}-2\">${year} Semester 2</option>`);
+            }
+        }
+
+        function downloadSubmissionReport(event) {
             const btn = event.target.closest('button');
             const originalText = btn.innerHTML;
+            const semesterSelect = document.getElementById('reportSemesterSelect');
+            const semester = semesterSelect ? semesterSelect.value : '';
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';
             
@@ -1017,7 +1044,7 @@
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 alert('Error generating report: ' + error.message);
-            }).generateSubmissionReportExcel();
+            }).generateSubmissionReportExcel(semester);
         }
 
         function renderFacultyDashboard(records) {
