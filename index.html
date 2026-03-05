@@ -228,6 +228,8 @@
 
         // Track the last used manual adjustment value
         let lastUsedManualAdjustment = 0;
+        // Track currently loaded draft id (if any)
+        let activeDraftId = null;
 
         function addWorkloadEntry() {
             // Calculate current manual adjustment sum
@@ -715,6 +717,21 @@
                             $('#workloadEntries').empty();
                             addWorkloadEntry();
                             loadWorkloadSummary && loadWorkloadSummary();
+
+                            // If this submission came from a loaded draft, delete that draft
+                            if (activeDraftId) {
+                                google.script.run
+                                    .withSuccessHandler(() => {
+                                        loadDrafts && loadDrafts();
+                                        activeDraftId = null;
+                                    })
+                                    .withFailureHandler(err => {
+                                        console.error('Error deleting draft after submission:', err);
+                                        // Do not alert user here; submission already succeeded
+                                        activeDraftId = null;
+                                    })
+                                    .deleteDraftById(activeDraftId);
+                            }
                         } else {
                             alert(response.message || 'Error submitting workloads');
                         }
@@ -2492,6 +2509,9 @@
             alert('Draft not found!');
             return;
         }
+
+        // Remember which draft is currently being edited, so we can delete it after successful submission
+        activeDraftId = draft.id || null;
 
         showSubmissionForm();
 
