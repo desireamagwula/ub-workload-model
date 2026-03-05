@@ -173,6 +173,114 @@ function getWorkloadRecord(recordId) {
 }
 
 /**
+ * Saves a draft workload for the current user in Firebase.
+ * @param {Object} draftData - Draft payload from the client.
+ * @returns {Object} Result with success flag, id, and message.
+ */
+function saveDraft(draftData) {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    if (!userEmail) {
+      return { success: false, message: 'User email not found' };
+    }
+    if (!isUserAuthorized(userEmail)) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    const safeEmail = userEmail.replace(/\./g, ',');
+    const timestamp = new Date().toISOString();
+    const id = draftData && draftData.id ? String(draftData.id) : String(Date.now());
+
+    const draftObject = {
+      id: id,
+      userEmail: userEmail,
+      timestamp: timestamp,
+      formData: draftData && draftData.formData ? draftData.formData : {},
+      entries: Array.isArray(draftData && draftData.entries) ? draftData.entries : [],
+      adjustments: Array.isArray(draftData && draftData.adjustments) ? draftData.adjustments : []
+    };
+
+    UrlFetchApp.fetch(`${BASE_URL}/drafts/${safeEmail}/${id}.json`, {
+      method: 'PUT',
+      contentType: 'application/json',
+      payload: JSON.stringify(draftObject)
+    });
+
+    return { success: true, id: id, message: 'Draft saved successfully.' };
+  } catch (error) {
+    console.error('Error in saveDraft:', error);
+    return { success: false, message: 'Error saving draft: ' + error.message };
+  }
+}
+
+/**
+ * Lists all drafts for the current user.
+ * @returns {Array<Object>} Array of draft objects.
+ */
+function listDraftsForCurrentUser() {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    if (!userEmail || !isUserAuthorized(userEmail)) {
+      return [];
+    }
+    const safeEmail = userEmail.replace(/\./g, ',');
+    const response = UrlFetchApp.fetch(`${BASE_URL}/drafts/${safeEmail}.json`);
+    const data = JSON.parse(response.getContentText());
+    if (!data) return [];
+
+    const drafts = Object.values(data);
+    drafts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return drafts;
+  } catch (error) {
+    console.error('Error in listDraftsForCurrentUser:', error);
+    return [];
+  }
+}
+
+/**
+ * Gets a specific draft for the current user by id.
+ * @param {string} draftId - Draft identifier.
+ * @returns {Object|null} Draft object or null if not found/unauthorized.
+ */
+function getDraftById(draftId) {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    if (!userEmail || !isUserAuthorized(userEmail)) {
+      return null;
+    }
+    const safeEmail = userEmail.replace(/\./g, ',');
+    const response = UrlFetchApp.fetch(`${BASE_URL}/drafts/${safeEmail}/${draftId}.json`);
+    const data = JSON.parse(response.getContentText());
+    return data || null;
+  } catch (error) {
+    console.error('Error in getDraftById:', error);
+    return null;
+  }
+}
+
+/**
+ * Deletes a specific draft for the current user by id.
+ * @param {string} draftId - Draft identifier.
+ * @returns {Object} Result with success flag and message.
+ */
+function deleteDraftById(draftId) {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    if (!userEmail || !isUserAuthorized(userEmail)) {
+      return { success: false, message: 'Unauthorized' };
+    }
+    const safeEmail = userEmail.replace(/\./g, ',');
+    UrlFetchApp.fetch(`${BASE_URL}/drafts/${safeEmail}/${draftId}.json`, {
+      method: 'delete'
+    });
+    return { success: true, message: 'Draft deleted successfully.' };
+  } catch (error) {
+    console.error('Error in deleteDraftById:', error);
+    return { success: false, message: 'Error deleting draft: ' + error.message };
+  }
+}
+
+/**
  * Gets all workload records for a specific user
  * @param {string} email - The user's email
  * @returns {Array<Object>} Array of workload records

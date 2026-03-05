@@ -1,0 +1,33 @@
+---
+description: Core coding, auth, and data-access standards for the UB workload Apps Script project
+alwaysApply: true
+---
+
+# UB Workload Coding Standards
+
+## File boundaries
+
+- `authorized_users.gs` is the single source of truth for authorization data and helpers. Do not redefine `isUserAuthorized`, `getUserRole`, `getUserName`, or `getFacultyUnderUser` in other files.
+- `workload.gs` owns all Firebase access, workload record CRUD, summaries, approvals, profiles, and reporting.
+- `index.html` owns all DOM manipulation and UX; it calls backend functions only via `google.script.run`.
+
+## Backend patterns (Apps Script)
+
+- Wrap all external calls (`UrlFetchApp.fetch`) in `try/catch`, log with `console.error`, and return `{ success, message, ... }` objects.
+- Always resolve the current user with `Session.getActiveUser().getEmail()` and enforce role checks before returning or mutating sensitive data.
+- Use the `safeEmail = email.replace(/\./g, ',')` and `recordId = \`\${safeEmail}_\${semester}\`` conventions consistently.
+- When adding new reporting or summary functions, ensure each faculty member is counted at most once per logical aggregation.
+
+## Frontend patterns (`index.html`)
+
+- Use Bootstrap classes and the existing UB color CSS variables (`--ub-purple`, `--ub-gold`) for visual consistency.
+- Add new workload entry types by following the existing `addWorkloadEntry` / `updateSubcategories` / `updateActivities` pattern.
+- Run client-side validation before submissions and show clear, user-friendly error messages.
+- Use `google.script.run.withSuccessHandler(...).withFailureHandler(...)` for all backend calls, and do not assume network success.
+
+## Auth & roles
+
+- When implementing new flows, check `getUserRole` and restrict operations appropriately:
+  - Chairs/Deans/Super Admin may see and act on multiple users’ data.
+  - Faculty should only see and edit their own submissions.
+- Update `AUTHORIZED_USERS.deans`, `AUTHORIZED_USERS.chairs`, `facultyMap`, and `deanFacultyMap` together when roles or structures change.

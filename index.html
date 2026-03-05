@@ -2365,10 +2365,8 @@
         recalculateAllEntries();
     });
 
-    function saveDraft() {
+    function buildDraftData() {
         const draftData = {
-            userEmail: userEmail,
-            timestamp: new Date().toISOString(),
             formData: {
                 personName: $('#personName').val(),
                 faculty: $('#faculty').val(),
@@ -2416,127 +2414,161 @@
             });
         });
 
-        const draftKey = `draft_${userEmail}_${Date.now()}`;
-        localStorage.setItem(draftKey, JSON.stringify(draftData));
-        alert('Draft saved successfully!');
-        showDashboard(userRecords);
+        return draftData;
+    }
+
+    function saveDraft() {
+        const draftData = buildDraftData();
+        google.script.run
+            .withSuccessHandler(res => {
+                if (!res || !res.success) {
+                    alert(res && res.message ? res.message : 'Error saving draft.');
+                    return;
+                }
+                alert('Draft saved successfully!');
+                showDashboard(userRecords);
+            })
+            .withFailureHandler(error => {
+                console.error('Error saving draft:', error);
+                alert('Error saving draft: ' + (error.message || 'Unknown error'));
+            })
+            .saveDraft(draftData);
     }
 
     function loadDrafts() {
         const draftsContainer = $('#savedDrafts');
         draftsContainer.empty();
-        let hasDrafts = false;
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith(`draft_${userEmail}`)) {
-                hasDrafts = true;
-                const draft = JSON.parse(localStorage.getItem(key));
-                const draftCard = `
-                    <div class="col-md-4">
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">Draft - ${new Date(draft.timestamp).toLocaleString()}</h5>
-                                <p class="card-text">
-                                    <strong>Semester:</strong> ${draft.formData.semester || 'Not set'}<br>
-                                    <strong>Type:</strong> ${draft.formData.submissionType || 'Not set'}
-                                </p>
-                                <button class="btn btn-primary btn-sm" onclick="loadDraftIntoForm('${key}')">Load</button>
-                                <button class="btn btn-danger btn-sm" onclick="deleteDraft('${key}')">Delete</button>
+        google.script.run
+            .withSuccessHandler(drafts => {
+                if (!drafts || drafts.length === 0) {
+                    draftsContainer.html('<div class="col-12"><div class="alert alert-secondary">No saved drafts found.</div></div>');
+                    return;
+                }
+                drafts.forEach(draft => {
+                    const draftCard = `
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Draft - ${new Date(draft.timestamp).toLocaleString()}</h5>
+                                    <p class="card-text">
+                                        <strong>Semester:</strong> ${(draft.formData && draft.formData.semester) || 'Not set'}<br>
+                                        <strong>Type:</strong> ${(draft.formData && draft.formData.submissionType) || 'Not set'}
+                                    </p>
+                                    <button class="btn btn-primary btn-sm" onclick="loadDraftFromServer('${draft.id}')">Load</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteDraftFromServer('${draft.id}')">Delete</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                draftsContainer.append(draftCard);
-            }
-        }
-        if (!hasDrafts) {
-            draftsContainer.html('<div class="col-12"><div class="alert alert-secondary">No saved drafts found.</div></div>');
-        }
+                    `;
+                    draftsContainer.append(draftCard);
+                });
+            })
+            .withFailureHandler(error => {
+                console.error('Error loading drafts:', error);
+                draftsContainer.html('<div class="col-12"><div class="alert alert-danger">Error loading drafts.</div></div>');
+            })
+            .listDraftsForCurrentUser();
     }
 
-    function deleteDraft(key) {
-        if (confirm('Are you sure you want to delete this draft?')) {
-            localStorage.removeItem(key);
-            loadDrafts();
-        }
+    function deleteDraftFromServer(id) {
+        if (!confirm('Are you sure you want to delete this draft?')) return;
+        google.script.run
+            .withSuccessHandler(res => {
+                if (!res || !res.success) {
+                    alert(res && res.message ? res.message : 'Error deleting draft.');
+                    return;
+                }
+                loadDrafts();
+            })
+            .withFailureHandler(error => {
+                console.error('Error deleting draft:', error);
+                alert('Error deleting draft: ' + (error.message || 'Unknown error'));
+            })
+            .deleteDraftById(id);
     }
 
-    function loadDraftIntoForm(key) {
-        const draft = JSON.parse(localStorage.getItem(key));
-        if (!draft) {
+    function fillFormFromDraft(draft) {
+        if (!draft || !draft.formData) {
             alert('Draft not found!');
             return;
         }
 
         showSubmissionForm();
 
-        // Use a timeout to ensure the form is visible and populated before we fill it
         setTimeout(() => {
-            // Fill main form data
-            $('#personName').val(draft.formData.personName);
-            $('#faculty').val(draft.formData.faculty);
-            $('#yearsWorking').val(draft.formData.yearsWorking);
-            $('#facultyCategory').val(draft.formData.facultyCategory).trigger('change');
-            $('#facultyType').val(draft.formData.facultyType);
-            $('#semesterSelect').val(draft.formData.semester);
-            $('#submissionType').val(draft.formData.submissionType);
+            $('#personName').val(draft.formData.personName || '');
+            $('#faculty').val(draft.formData.faculty || '');
+            $('#yearsWorking').val(draft.formData.yearsWorking || '');
+            $('#facultyCategory').val(draft.formData.facultyCategory || '').trigger('change');
+            $('#facultyType').val(draft.formData.facultyType || '');
+            $('#semesterSelect').val(draft.formData.semester || '');
+            $('#submissionType').val(draft.formData.submissionType || '');
 
-            // Clear existing entries and adjustments
             $('#workloadEntries').empty();
             $('#adjustmentEntries').empty();
 
-            // Load workload entries
-            draft.entries.forEach(entryData => {
-                addWorkloadEntry();
-                const entryDiv = $('.workload-entry').last();
-                entryDiv.find('.category').val(entryData.category).trigger('change');
-                // Need another timeout for sub-elements to populate
-                setTimeout(() => {
-                    entryDiv.find('.subcategory').val(entryData.subcategory).trigger('change');
+            if (Array.isArray(draft.entries)) {
+                draft.entries.forEach(entryData => {
+                    addWorkloadEntry();
+                    const entryDiv = $('.workload-entry').last();
+                    entryDiv.find('.category').val(entryData.category || '').trigger('change');
                     setTimeout(() => {
-                        entryDiv.find('.activity').val(entryData.activity).trigger('change');
-                        entryDiv.find('.course-code').val(entryData.courseCode);
-                        entryDiv.find('.sei-score').val(entryData.seiScore);
-                        entryDiv.find('.student-count').val(entryData.studentCount);
-                        entryDiv.find('.credit-hours').val(entryData.creditHours);
-                        entryDiv.find('.practicum-type').val(entryData.practicumType);
-                        entryDiv.find('.practicum-students').val(entryData.practicumStudents);
-                        entryDiv.find('.practicum-weeks').val(entryData.practicumWeeks);
-                        entryDiv.find('.faculty-select').val(entryData.facultySelect).trigger('change');
-                        entryDiv.find('.intern-count').val(entryData.internCount);
-                        entryDiv.find('.program-level').val(entryData.programLevel);
-                        entryDiv.find('.course-select').val(entryData.courseSelect);
-                        entryDiv.find('.fhscourse-select').val(entryData.fhscourseSelect);
-                        entryDiv.find('.quantity').val(entryData.quantity);
-                        entryDiv.find('.description').val(entryData.description);
+                        entryDiv.find('.subcategory').val(entryData.subcategory || '').trigger('change');
+                        setTimeout(() => {
+                            entryDiv.find('.activity').val(entryData.activity || '').trigger('change');
+                            entryDiv.find('.course-code').val(entryData.courseCode || '');
+                            entryDiv.find('.sei-score').val(entryData.seiScore || '');
+                            entryDiv.find('.student-count').val(entryData.studentCount || '');
+                            entryDiv.find('.credit-hours').val(entryData.creditHours || '');
+                            entryDiv.find('.practicum-type').val(entryData.practicumType || '');
+                            entryDiv.find('.practicum-students').val(entryData.practicumStudents || '');
+                            entryDiv.find('.practicum-weeks').val(entryData.practicumWeeks || '');
+                            entryDiv.find('.faculty-select').val(entryData.facultySelect || '').trigger('change');
+                            entryDiv.find('.intern-count').val(entryData.internCount || '');
+                            entryDiv.find('.program-level').val(entryData.programLevel || '');
+                            entryDiv.find('.course-select').val(entryData.courseSelect || '');
+                            entryDiv.find('.fhscourse-select').val(entryData.fhscourseSelect || '');
+                            entryDiv.find('.quantity').val(entryData.quantity || '');
+                            entryDiv.find('.description').val(entryData.description || '');
+                        }, 200);
                     }, 200);
-                }, 200);
-            });
+                });
+            }
 
-            // Load adjustments
-            draft.adjustments.forEach(adjData => {
-                addAdjustmentEntry();
-                const adjDiv = $('.adjustment-entry').last();
-                adjDiv.find('.adjustment-type').val(adjData.type).trigger('change');
-                setTimeout(() => {
-                    adjDiv.find('.adjustment-value').val(adjData.value);
-                    adjDiv.find('.thesis-student-type').val(adjData.thesisStudentType).trigger('change');
-                    adjDiv.find('.thesis-student-count').val(adjData.thesisStudentCount);
-                    adjDiv.find('.mphil-credit').val(adjData.mphilCredit);
-                }, 200);
-            });
+            if (Array.isArray(draft.adjustments)) {
+                draft.adjustments.forEach(adjData => {
+                    addAdjustmentEntry();
+                    const adjDiv = $('.adjustment-entry').last();
+                    adjDiv.find('.adjustment-type').val(adjData.type || '').trigger('change');
+                    setTimeout(() => {
+                        adjDiv.find('.adjustment-value').val(adjData.value || '');
+                        adjDiv.find('.thesis-student-type').val(adjData.thesisStudentType || '').trigger('change');
+                        adjDiv.find('.thesis-student-count').val(adjData.thesisStudentCount || '');
+                        adjDiv.find('.mphil-credit').val(adjData.mphilCredit || '');
+                    }, 200);
+                });
+            }
 
-            // Recalculate everything after a final delay
             setTimeout(() => {
                 recalculateAllEntries();
-                // After loading, we should probably remove the draft
-                // Or ask the user if they want to remove it after submitting
-                localStorage.removeItem(key); 
-                alert('Draft loaded. It has been removed from your saved drafts.');
-                loadDrafts();
             }, 1000);
-
         }, 100);
+    }
+
+    function loadDraftFromServer(id) {
+        google.script.run
+            .withSuccessHandler(draft => {
+                if (!draft) {
+                    alert('Draft not found!');
+                    return;
+                }
+                fillFormFromDraft(draft);
+            })
+            .withFailureHandler(error => {
+                console.error('Error loading draft:', error);
+                alert('Error loading draft: ' + (error.message || 'Unknown error'));
+            })
+            .getDraftById(id);
     }
 
     function createFacultySemesterCard(email, record) {
