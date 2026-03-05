@@ -898,6 +898,9 @@
         function showUnauthorizedMessage() {
             $('#dashboard').hide();
             $('#submissionFormContainer').hide();
+            // Show what email (if any) the system detected for the current user
+            const emailText = userEmail && userEmail.trim() !== '' ? userEmail : '(no email detected)';
+            $('#unauthorizedEmail').text(emailText);
             $('#unauthorized').show();
         }
 
@@ -3023,7 +3026,20 @@
     <div id="unauthorized" style="display: none;">
         <div class="alert alert-danger">
             <h4 class="alert-heading">Access Denied</h4>
-            <p>You are not authorized to access this page. Please contact the administrator if you believe this is an error.</p>
+            <p>You are not authorized to access this page based on the account detected by the system.</p>
+            <p>
+                <strong>Detected email:</strong>
+                <span id="unauthorizedEmail">(no email detected)</span>
+            </p>
+            <hr>
+            <p class="mb-1">
+                If you believe you should have access:
+            </p>
+            <ul class="mb-2">
+                <li>Make sure you are signed into your University of Belize account (for example, <code>firstname.lastname@ub.edu.bz</code>).</li>
+                <li>Close this tab, sign out of any personal Google accounts, then sign back in with your UB account and open the workload system again.</li>
+                <li>If you are still seeing this message and you know your UB email is on the authorized list, please contact <strong>chimezirim.amagwula@ub.edu.bz</strong> for assistance. Include the email shown above in your message.</li>
+            </ul>
         </div>
     </div>
 
